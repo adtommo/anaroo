@@ -1,0 +1,8 @@
+# Default owner for everything
+* @adtommo
+
+# Specific ownership (expand as team grows)
+/backend/       @adtommo
+/frontend/      @adtommo
+/packages/      @adtommo
+/.github/       @adtommo

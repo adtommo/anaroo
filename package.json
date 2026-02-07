@@ -1,0 +1,37 @@
+{
+  "name": "anaroo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "build": "npm run build --workspace=packages/shared && npm run build:backend && npm run build:frontend",
+    "test": "npm run test --workspace=packages/shared && npm run test --workspace=backend && npm run test --workspace=frontend",
+    "test:shared": "npm run test --workspace=packages/shared",
+    "test:backend": "npm run test --workspace=backend",
+    "test:frontend": "npm run test --workspace=frontend",
+    "storybook": "npm run storybook --workspace=frontend",
+    "build-storybook": "npm run build-storybook --workspace=frontend",
+    "cy:open": "npm run cy:open --workspace=frontend",
+    "cy:run": "npm run cy:run --workspace=frontend",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^3.2.4"
+  }
+}
