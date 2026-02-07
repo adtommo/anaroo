@@ -7,7 +7,7 @@
  * - Please do NOT modify this file.
  */
 
-const PACKAGE_VERSION = '2.12.8'
+const PACKAGE_VERSION = '2.12.9'
 const INTEGRITY_CHECKSUM = '4db4a41e972cec1b64cc569c66952d82'
 const IS_MOCKED_RESPONSE = Symbol('isMockedResponse')
 const activeClientIds = new Set()
@@ -30,17 +30,6 @@ addEventListener('message', async function (event) {
   const client = await self.clients.get(clientId)
 
   if (!client) {
-    return
-  }
-
-  // Verify that the message comes from the same origin as the service worker.
-  try {
-    const clientUrl = new URL(client.url)
-    if (clientUrl.origin !== self.location.origin) {
-      return
-    }
-  } catch (error) {
-    // If the client URL cannot be parsed, ignore the message.
     return
   }
 

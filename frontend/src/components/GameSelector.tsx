@@ -1,6 +1,7 @@
 import { GameMode, TimedDuration, GAME_MODES, TIMED_DURATIONS } from '@anaroo/shared';
 import { useGameSettings, Language, Difficulty } from '../contexts/GameSettingsContext';
 import { SearchableSelect } from './SearchableSelect';
+import { JSX } from 'react';
 
 interface GameSelectorProps {
   selectedMode: GameMode;

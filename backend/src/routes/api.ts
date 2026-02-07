@@ -295,7 +295,7 @@ router.get('/leaderboard/user/:id', async (req: Request, res: Response): Promise
     const userId = req.params.id;
     const mode = parseGameMode(req.query.mode) || GameMode.TIMED;
 
-    const rank = await leaderboardService.getUserRank(userId, mode);
+    const rank = await leaderboardService.getUserRank(userId as string, mode);
     
     if (!rank) {
       res.status(404).json({ error: 'User not found on leaderboard' });
@@ -433,7 +433,7 @@ router.get('/profile', requireAuth, async (req: AuthRequest, res: Response): Pro
 router.get('/profile/user/:nickname', async (req: Request, res: Response): Promise<void> => {
   try {
     const { nickname } = req.params;
-    const profile = await profileService.getProfileByNickname(nickname);
+    const profile = await profileService.getProfileByNickname(nickname as string);
     if (!profile) {
       res.status(404).json({ error: 'User not found' });
       return;
