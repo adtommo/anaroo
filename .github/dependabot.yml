@@ -17,7 +17,6 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    auto-merge: true
 
   # GitHub Actions versions
   - package-ecosystem: github-actions
@@ -27,4 +26,3 @@ updates:
       day: monday
     commit-message:
       prefix: "ci"
-    auto-merge: true
