@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:24.11.0-alpine3.22 AS builder
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ RUN npm run build --workspace=packages/shared
 RUN npm run build --workspace=backend
 
 # Production stage
-FROM node:20-alpine
+FROM node:24.11.0-alpine3.22
 
 WORKDIR /app
 
