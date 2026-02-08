@@ -17,12 +17,34 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.release.outputs.version }}
     steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci --workspaces
+
       - uses: googleapis/release-please-action@v4
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      - name: Regenerate package-lock file
+        run: |
+          npm install --workspaces --package-lock-only
+
+      - name: Commit updated package-lock file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json packages/**/package-lock.json
+          git commit -m "chore: update package-lock file [skip ci]" || echo "No changes to commit"
+          git push
 
   docker-publish:
     runs-on: ubuntu-latest
