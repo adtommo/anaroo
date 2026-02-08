@@ -17,8 +17,7 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.release.outputs.version }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -28,30 +27,24 @@ jobs:
       - name: Install dependencies
         run: npm ci --workspaces
 
-      - name: Run Release Please
-        uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v4
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      - name: Regenerate root package-lock.json
-        run: npm install --workspaces --package-lock-only
+      - name: Regenerate package-lock file
+        run: |
+          npm install --workspaces --package-lock-only
 
-      - name: Commit updated package-lock.json if changed
+      - name: Commit updated package-lock file
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Only commit if there are changes
-          if ! git diff --quiet package-lock.json; then
-            git add package-lock.json
-            git commit -m "chore: update package-lock file [skip ci]"
-            git push
-          else
-            echo "No changes in package-lock.json, skipping commit."
-          fi
+          git add package-lock.json packages/**/package-lock.json
+          git commit -m "chore: update package-lock file [skip ci]" || echo "No changes to commit"
+          git push
 
   docker-publish:
     runs-on: ubuntu-latest
