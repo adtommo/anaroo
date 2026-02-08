@@ -19,6 +19,15 @@ const UserSchema = new Schema<UserDocument>({
   profileImage: { type: String, default: null }, // Base64 or URL
 });
 
+const TIMED_DURATIONS = [30, 60, 120] as const;
+const TIMED_DURATION_FIELD = {
+  type: Number,
+  enum: TIMED_DURATIONS,
+  required: function (this: any) {
+    return this.mode === GameMode.TIMED;
+  },
+};
+
 const RunSchema = new Schema<RunDocument>({
   userId: { type: String, required: true, index: true },
   mode: { 
@@ -41,7 +50,7 @@ const RunSchema = new Schema<RunDocument>({
   wordsCompleted: { type: Number },
   survivalStreak: { type: Number },
   // Timed Mode specific
-  timedDuration: { type: Number, enum: Object.values(TimedDuration) },
+  timedDuration: TIMED_DURATION_FIELD,
 });
 
 // Compound index for user's runs by mode
@@ -59,7 +68,7 @@ const BestScoreSchema = new Schema<BestScoreDocument>({
   wpm: { type: Number, required: true },
   updatedAt: { type: Date, default: Date.now },
   // Timed Mode specific
-  timedDuration: { type: Number, enum: Object.values(TimedDuration) },
+  timedDuration: TIMED_DURATION_FIELD,
 });
 
 // Unique constraint: one best score per user per mode (and duration for timed)
