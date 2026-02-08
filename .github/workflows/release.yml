@@ -36,23 +36,6 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      - name: Regenerate root package-lock.json
-        run: npm install --workspaces --package-lock-only
-
-      - name: Commit updated package-lock.json if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Only commit if there are changes
-          if ! git diff --quiet package-lock.json; then
-            git add package-lock.json
-            git commit -m "chore: update package-lock file [skip ci]"
-            git push
-          else
-            echo "No changes in package-lock.json, skipping commit."
-          fi
-
   docker-publish:
     runs-on: ubuntu-latest
     needs: release-please
