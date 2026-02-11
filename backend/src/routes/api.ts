@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { GameMode, SubmitScoreRequest, TimedDuration, generateSeed } from '@anaroo/shared/node';
+import { GameMode, SubmitScoreRequest, TimedDuration, generateSeed } from '@anaroo/shared';
 
 const VALID_GAME_MODES = Object.values(GameMode) as string[];
 const VALID_TIMED_DURATIONS = Object.values(TimedDuration).filter(v => typeof v === 'number') as number[];

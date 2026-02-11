@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "dev:ts-node": "nodemon",
-    "build": "tsc",
+    "build": "tsc && cp -r src/data dist/data",
     "start": "node dist/server.js",
+    "generate:words": "tsx src/scripts/generate-words.ts",
     "seed:words": "tsx src/scripts/seed-anagram-groups.ts",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -20,6 +21,7 @@
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "leo-profanity": "^1.9.0",
     "mongoose": "^9.1.6",
     "redis": "^5.10.0"
   },

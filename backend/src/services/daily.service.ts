@@ -1,6 +1,5 @@
 import { DailyChallenge, GameMode, scrambleWord, SeededRandom } from '@anaroo/shared';
-import { generateWords } from '@anaroo/shared/node';
-import { DailyChallengeModel } from '../models';
+import { AnagramGroupModel, DailyChallengeModel } from '../models';
 
 export class DailyChallengeService {
   /**
@@ -8,14 +7,14 @@ export class DailyChallengeService {
    */
   async getTodayChallenge(): Promise<DailyChallenge> {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    
+
     const challenge = await DailyChallengeModel.findOne({ date: today }).lean().exec();
-    
+
     if (!challenge) {
       // Create today's challenge
       return await this.createDailyChallenge(today);
     }
-    
+
     return {
       _id: challenge._id.toString(),
       date: challenge.date,
@@ -31,11 +30,11 @@ export class DailyChallengeService {
    */
   async getChallengeForDate(date: string): Promise<DailyChallenge | null> {
     const challenge = await DailyChallengeModel.findOne({ date }).lean().exec();
-    
+
     if (!challenge) {
       return null;
     }
-    
+
     return {
       _id: challenge._id.toString(),
       date: challenge.date,
@@ -50,20 +49,26 @@ export class DailyChallengeService {
    * Create a daily challenge for a specific date
    */
   private async createDailyChallenge(date: string): Promise<DailyChallenge> {
-    // Use date as seed for reproducibility
     const seed = `daily-${date}`;
     const rng = new SeededRandom(seed);
-    
-    // Select a word (prefer medium-length words for daily challenge)
-    const allWords = generateWords(seed, 500);
-    const mediumWords = allWords.filter(w => w.answer.length >= 5 && w.answer.length <= 8);
-    const pool = mediumWords.length > 0 ? mediumWords : allWords;
-    const wordIndex = rng.nextInt(0, pool.length - 1);
-    const word = pool[wordIndex].answer;
 
-    // Scramble it
+    // Pick a random anagram group from the database
+    const count = await AnagramGroupModel.countDocuments({ lang: 'en', difficulty: 'easy' });
+    if (count === 0) {
+      throw new Error('No anagram groups found. Run seed:words first.');
+    }
+
+    const index = rng.nextInt(0, count - 1);
+    const group = await AnagramGroupModel.findOne({ lang: 'en', difficulty: 'easy' }).skip(index).lean();
+    if (!group) {
+      throw new Error('Failed to pick anagram group');
+    }
+
+    // Pick a word from the group
+    const wordIndex = rng.nextInt(0, group.words.length - 1);
+    const word = group.words[wordIndex];
     const scrambled = scrambleWord(word, rng);
-    
+
     const challenge = await DailyChallengeModel.create({
       date,
       word,
@@ -71,9 +76,9 @@ export class DailyChallengeService {
       seed,
       createdAt: new Date(),
     });
-    
+
     const plainChallenge = challenge.toObject();
-    
+
     return {
       _id: plainChallenge._id.toString(),
       date: plainChallenge.date,
@@ -132,7 +137,7 @@ export class DailyChallengeService {
    */
   async getUserHistory(userId: string, limit: number = 30) {
     const { RunModel } = await import('../models');
-    
+
     const runs = await RunModel.find({
       userId,
       mode: GameMode.DAILY,
@@ -140,7 +145,7 @@ export class DailyChallengeService {
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean();
-    
+
     return runs.map(run => ({
       ...run,
       _id: run._id.toString(),

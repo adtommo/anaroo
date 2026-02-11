@@ -4,18 +4,18 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json ./
-COPY packages/shared/package.json ./packages/shared/
+COPY shared/package.json ./shared/
 COPY frontend/package.json ./frontend/
 
 # Install dependencies
-RUN npm install --workspace=packages/shared --workspace=frontend --legacy-peer-deps
+RUN npm install --workspace=shared --workspace=frontend --legacy-peer-deps
 
 # Copy source code
-COPY packages/shared ./packages/shared
+COPY shared ./shared
 COPY frontend ./frontend
 
 # Build shared package
-RUN npm run build --workspace=packages/shared
+RUN npm run build --workspace=shared
 
 # Build frontend
 RUN npm run build --workspace=frontend

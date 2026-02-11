@@ -1,0 +1,75 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: anaroo-mongo-test
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: anaroo
+    networks:
+      - anaroo-network
+    volumes:
+      - mongo-data-test:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: anaroo-redis-test
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    networks:
+      - anaroo-network
+    volumes:
+      - redis-data-test:/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: anaroo-backend-test
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      MONGODB_URI: mongodb://mongo:27017/anaroo
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: test-jwt-secret
+      CORS_ORIGIN: http://localhost:5173
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - anaroo-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/api/health').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: anaroo-frontend-test
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - anaroo-network
+
+volumes:
+  mongo-data-test:
+  redis-data-test:
+
+networks:
+  anaroo-network:
+    driver: bridge

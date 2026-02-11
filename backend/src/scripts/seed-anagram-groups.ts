@@ -3,7 +3,7 @@ import path from 'path';
 import { signature } from '@anaroo/shared';
 import { AnagramGroupModel } from '../models';
 
-const WORDS_DIR = path.resolve(__dirname, '../../../packages/words');
+const WORDS_DIR = path.resolve(__dirname, '../data/words');
 
 export default async function seed() {
   const langDirs = fs.readdirSync(WORDS_DIR).filter((f) =>

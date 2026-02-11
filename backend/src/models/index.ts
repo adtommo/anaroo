@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { User, Run, BestScore, GameMode, PersonalStats, DailyChallenge, TimedDuration, AnagramGroup } from '@anaroo/shared/node';
+import { User, Run, BestScore, GameMode, PersonalStats, DailyChallenge, TimedDuration, AnagramGroup } from '@anaroo/shared';
 
 export interface UserDocument extends Omit<User, '_id'>, Document {}
 export interface RunDocument extends Omit<Run, '_id'>, Document {}

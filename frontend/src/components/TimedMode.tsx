@@ -21,6 +21,7 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
     selectedIndexes,
     currentGuess,
     lastResult,
+    currentAnswer,
     selectLetter,
     removeLastLetter,
     clearGuess,
@@ -169,6 +170,13 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
             <span className="stat-value">{avgTimePerWord.toFixed(1)}s</span>
           </div>
         </div>
+
+        {currentAnswer && (
+          <div className="missed-word">
+            <span className="label">The word was</span>
+            <span className="word">{currentAnswer}</span>
+          </div>
+        )}
 
         {result?.isPersonalBest && (
           <div className="personal-best-badge">new personal best</div>

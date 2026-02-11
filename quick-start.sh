@@ -31,7 +31,7 @@ echo ""
 
 # Build shared package
 echo "🔨 Building shared package..."
-npm run build --workspace=packages/shared 
+npm run build --workspace=shared
 echo ""
 
 # Set up backend environment

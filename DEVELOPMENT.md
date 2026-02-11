@@ -32,7 +32,7 @@ cp backend/.env.example backend/.env
 Build the shared package (backend and frontend depend on it):
 
 ```bash
-npm run build --workspace=packages/shared
+npm run build --workspace=shared
 ```
 
 ### Running locally
@@ -50,7 +50,7 @@ npm run dev:frontend  # http://localhost:5173
 
 ```
 anaroo/
-├── packages/shared/         # @anaroo/shared — types, modes, scoring, hints, XP
+├── shared/                  # @anaroo/shared — types, modes, scoring, hints, XP
 ├── backend/                 # @anaroo/backend — Express API
 │   ├── src/
 │   │   ├── models/          # MongoDB schemas (User, Run, BestScore, AnagramGroup)
@@ -77,11 +77,11 @@ anaroo/
 The shared package must be built before backend or frontend can compile:
 
 ```
-packages/shared  →  backend
-                 →  frontend
+shared  →  backend
+        →  frontend
 ```
 
-If you change shared code, rebuild it: `npm run build --workspace=packages/shared`
+If you change shared code, rebuild it: `npm run build --workspace=shared`
 
 ## Scripts
 
@@ -106,7 +106,7 @@ Unit tests use Vitest across all workspaces:
 npm test                           # all workspaces
 npm run test:frontend              # frontend only
 npm run test:backend               # backend only
-npm run test --workspace=packages/shared  # shared only
+npm run test --workspace=shared            # shared only
 ```
 
 E2E tests use Cypress (requires dev servers running):
@@ -127,7 +127,7 @@ npm run storybook
 Colors are managed entirely in `frontend/src/contexts/ThemeContext.tsx`. The CSS uses `var(--main-color)` etc. but the values are set by ThemeContext at runtime. Available themes: dark (default), light, midnight, forest, sunset.
 
 To add a theme:
-1. Add the theme to `THEMES` in `packages/shared/src/xp.ts`
+1. Add the theme to `THEMES` in `shared/src/xp.ts`
 2. Add color vars to `THEME_VARS` in `frontend/src/contexts/ThemeContext.tsx`
 
 ## Git Workflow
@@ -169,7 +169,7 @@ Handled automatically by [release-please](https://github.com/googleapis/release-
 ## Common Issues
 
 **"Cannot find module '@anaroo/shared'"**
-→ Build the shared package: `npm run build --workspace=packages/shared`
+→ Build the shared package: `npm run build --workspace=shared`
 
 **MongoDB connection error**
 → Check it's running: `docker ps | grep mongo` — start it: `docker start mongo-dev`

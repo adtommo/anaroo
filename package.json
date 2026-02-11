@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "private": true,
   "workspaces": [
-    "packages/*",
+    "shared",
     "frontend",
     "backend"
   ],
@@ -13,9 +13,9 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build:frontend": "npm run build --workspace=frontend",
     "build:backend": "npm run build --workspace=backend",
-    "build": "npm run build --workspace=packages/shared && npm run build:backend && npm run build:frontend",
-    "test": "npm run test --workspace=packages/shared && npm run test --workspace=backend && npm run test --workspace=frontend",
-    "test:shared": "npm run test --workspace=packages/shared",
+    "build": "npm run build --workspace=shared && npm run build:backend && npm run build:frontend",
+    "test": "npm run test --workspace=shared && npm run test --workspace=backend && npm run test --workspace=frontend",
+    "test:shared": "npm run test --workspace=shared",
     "test:backend": "npm run test --workspace=backend",
     "test:frontend": "npm run test --workspace=frontend",
     "storybook": "npm run storybook --workspace=frontend",

@@ -5,7 +5,6 @@ import {
   scrambleWord,
   generateSeed,
 } from '@anaroo/shared';
-import { generateWords } from '@anaroo/shared/node';
 
 describe('signature', () => {
   it('returns sorted letters', () => {
@@ -91,41 +90,5 @@ describe('generateSeed', () => {
     const seed2 = generateSeed();
 
     expect(seed1).not.toBe(seed2);
-  });
-});
-
-describe('generateWords', () => {
-  it('returns array of { scrambled, answer }', () => {
-    const words = generateWords(generateSeed(), 5);
-
-    expect(words.length).toBeGreaterThan(0);
-    expect(words.length).toBeLessThanOrEqual(5);
-    for (const w of words) {
-      expect(w).toHaveProperty('scrambled');
-      expect(w).toHaveProperty('answer');
-      expect(typeof w.scrambled).toBe('string');
-      expect(typeof w.answer).toBe('string');
-    }
-  });
-
-  it('respects count limit', () => {
-    const words = generateWords(generateSeed(), 3);
-    expect(words.length).toBeLessThanOrEqual(3);
-  });
-
-  it('produces deterministic results with same seed', () => {
-    const seed = 'deterministic-test-seed';
-    const words1 = generateWords(seed, 10);
-    const words2 = generateWords(seed, 10);
-
-    expect(words1).toEqual(words2);
-  });
-
-  it('scrambled word has same letters as answer', () => {
-    const words = generateWords(generateSeed(), 10);
-
-    for (const w of words) {
-      expect(signature(w.scrambled)).toBe(signature(w.answer));
-    }
   });
 });

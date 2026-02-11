@@ -29,10 +29,10 @@ jobs:
       - run: npm ci
 
       - name: Build shared package
-        run: npm run build --workspace=packages/shared
+        run: npm run build --workspace=shared
 
       - name: Test shared
-        run: npm run test --workspace=packages/shared
+        run: npm run test --workspace=shared
 
       - name: Test backend
         run: npm run test --workspace=backend

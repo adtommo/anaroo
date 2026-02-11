@@ -6,7 +6,7 @@
       "package-name": "anaroo",
       "changelog-path": "CHANGELOG.md",
       "extra-files": [
-        "packages/shared/package.json",
+        "shared/package.json",
         "backend/package.json",
         "frontend/package.json"
       ]

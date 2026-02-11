@@ -19,6 +19,7 @@ export function InfiniteSurvival({ language, difficulty }: InfiniteSurvivalProps
     selectedIndexes,
     currentGuess,
     lastResult,
+    currentAnswer,
     selectLetter,
     removeLastLetter,
     clearGuess,
@@ -164,6 +165,13 @@ export function InfiniteSurvival({ language, difficulty }: InfiniteSurvivalProps
             <span className="stat-value">{accuracy.toFixed(0)}%</span>
           </div>
         </div>
+
+        {currentAnswer && (
+          <div className="missed-word">
+            <span className="label">The word was</span>
+            <span className="word">{currentAnswer}</span>
+          </div>
+        )}
 
         {result?.isPersonalBest && (
           <div className="personal-best-badge">new personal best</div>
