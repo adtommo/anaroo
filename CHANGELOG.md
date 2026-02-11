@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.2...anaroo-v0.1.3) (2026-02-11)
+
+
+### Features
+
+* simplify shared and move words to backend ([57d8d69](https://github.com/adtommo/anaroo/commit/57d8d69ec63b88b8a9f47a94d3912e2dd4cda1b1))
+
 ## [0.1.2](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.1...anaroo-v0.1.2) (2026-02-08)
 
 
