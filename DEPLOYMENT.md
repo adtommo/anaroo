@@ -76,7 +76,7 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGIN=${CORS_ORIGIN}
-      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_WINDOW_MS=1000
       - RATE_LIMIT_MAX_REQUESTS=100
     depends_on:
       - mongo
