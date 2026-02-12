@@ -76,8 +76,8 @@ describe('Timed Game Flow', () => {
   it('supports keyboard input to select letters', () => {
     cy.get('.game-card').eq(1).click();
     cy.get('.btn-start').click();
+    cy.waitForGameReady();
 
-    // Mock word is "tac" - type 't'
     cy.get('.letter-tile')
       .first()
       .invoke('text')
@@ -90,13 +90,13 @@ describe('Timed Game Flow', () => {
   it('keyboard: typing already-used letter does nothing when no more available', () => {
     cy.get('.game-card').eq(1).click();
     cy.get('.btn-start').click();
+    cy.waitForGameReady();
 
-    // Mock word is "tac" - type 't' then 't' again
     cy.get('.letter-tile').first().invoke('text').then((letter) => {
       cy.get('body').type(letter);
       cy.get('.letter-tile.used').should('have.length', 1);
 
-      // Type the same letter again - only 1 't' in "tac"
+      // Type the same letter again - only 1 of each letter in "tac"
       cy.get('body').type(letter);
       cy.get('.letter-tile.used').should('have.length', 1);
     });
@@ -105,6 +105,7 @@ describe('Timed Game Flow', () => {
   it('keyboard: non-letter keys are ignored', () => {
     cy.get('.game-card').eq(1).click();
     cy.get('.btn-start').click();
+    cy.waitForGameReady();
 
     cy.get('body').type('123');
     cy.get('.letter-tile.used').should('have.length', 0);
@@ -113,6 +114,7 @@ describe('Timed Game Flow', () => {
   it('keyboard: Backspace removes last letter', () => {
     cy.get('.game-card').eq(1).click();
     cy.get('.btn-start').click();
+    cy.waitForGameReady();
 
     cy.get('.letter-tile').first().invoke('text').then((letter) => {
       cy.get('body').type(letter);
@@ -130,7 +132,7 @@ describe('Timed Game Flow', () => {
     cy.contains('Words: 0').should('be.visible');
 
     // Mock word is scrambled "tac", answer "cat"
-    cy.get('body').type('cat');
+    cy.solveWord('cat');
 
     cy.contains('Words: 1').should('be.visible');
   });
@@ -140,12 +142,12 @@ describe('Timed Game Flow', () => {
     cy.get('.btn-start').click();
 
     // Solve one correctly first
-    cy.get('body').type('cat');
+    cy.solveWord('cat');
     cy.contains('Words: 1').should('be.visible');
     cy.contains('Combo: 1').should('be.visible');
 
-    // Wrong guess "tac"
-    cy.get('body').type('tac');
+    // Wrong guess "tac" (not a valid answer)
+    cy.solveWord('tac');
     cy.contains('Combo: 0').should('be.visible');
     cy.contains('Words: 1').should('be.visible');
   });
@@ -154,11 +156,11 @@ describe('Timed Game Flow', () => {
     cy.get('.game-card').eq(1).click();
     cy.get('.btn-start').click();
 
-    cy.get('body').type('cat');
+    cy.solveWord('cat');
     cy.contains('Combo: 1').should('be.visible');
 
-    // Next word is "god" -> answer "dog" or "god"
-    cy.get('body').type('dog');
+    // Next word is also "tac" -> answer "cat"
+    cy.solveWord('cat');
     cy.contains('Combo: 2').should('be.visible');
     cy.contains('Words: 2').should('be.visible');
   });
@@ -181,6 +183,7 @@ describe('Timed Game Flow', () => {
   it('guess row shows letters as they are typed', () => {
     cy.get('.game-card').eq(1).click();
     cy.get('.btn-start').click();
+    cy.waitForGameReady();
 
     cy.get('.letter-tile').first().invoke('text').then((letter) => {
       cy.get('body').type(letter);
@@ -248,6 +251,7 @@ describe('Daily Mode', () => {
   it('keyboard works in daily mode', () => {
     cy.get('.game-card').eq(0).click();
     cy.get('.btn-start').click();
+    cy.waitForGameReady();
 
     cy.get('.letter-tile').first().invoke('text').then((letter) => {
       cy.get('body').type(letter);
@@ -286,7 +290,7 @@ describe('Survival Mode', () => {
     cy.get('.game-card').eq(2).click();
     cy.get('.btn-start').click();
 
-    cy.get('body').type('cat');
+    cy.solveWord('cat');
     cy.contains('Streak 1').should('be.visible');
   });
 
@@ -294,7 +298,8 @@ describe('Survival Mode', () => {
     cy.get('.game-card').eq(2).click();
     cy.get('.btn-start').click();
 
-    cy.get('body').type('tac');
+    // Submit wrong answer via tile clicks
+    cy.solveWord('tac');
 
     cy.get('.game-container').should('be.visible');
     cy.contains('game over').should('not.exist');
@@ -314,6 +319,7 @@ describe('Survival Mode', () => {
   it('keyboard non-letter input ignored in survival', () => {
     cy.get('.game-card').eq(2).click();
     cy.get('.btn-start').click();
+    cy.waitForGameReady();
 
     cy.get('body').type('123!@#');
     cy.get('.letter-tile.used').should('have.length', 0);

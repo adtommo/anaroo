@@ -15,7 +15,7 @@ import { dailyChallengeService } from '../services/daily.service';
 import { wordService } from '../services/word.service';
 import { profileService } from '../services/profile.service';
 import { UserModel } from '../models';
-import { AuthRequest, requireAuth, generateToken } from '../middleware/auth';
+import { AuthRequest, requireAuth, optionalAuth, generateToken } from '../middleware/auth';
 
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 const VALID_LANGS = ['en', 'es', 'fr', 'de'] as const;
@@ -344,7 +344,7 @@ router.get('/user/best', requireAuth, async (req: AuthRequest, res: Response): P
  * GET /api/word/pick
  * Pick a random word for the authenticated user
  */
-router.get('/word/pick', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/word/pick', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const rawLang = (req.query.lang as string) || 'en';
     const difficulty = (req.query.difficulty as string) || 'easy';
@@ -362,7 +362,7 @@ router.get('/word/pick', requireAuth, async (req: AuthRequest, res: Response): P
 
     const lang = rawLang as typeof VALID_LANGS[number];
 
-    const result = await wordService.pickWordForUser(req.userId!, lang, difficulty, seed);
+    const result = await wordService.pickWordForUser(req.userId, lang, difficulty, seed);
     res.json({ seed: seed, ...result });
   } catch (error) {
     const safeLang = ((req.query.lang as string) || 'en').replace(/[\r\n]/g, '');
@@ -374,6 +374,49 @@ router.get('/word/pick', requireAuth, async (req: AuthRequest, res: Response): P
       name: err.name,
     });
     res.status(500).json({ error: 'Failed to pick word' });
+  }
+});
+
+/**
+ * GET /api/word/picks
+ * Pick multiple random words for the authenticated user
+ */
+router.get('/word/picks', optionalAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const rawLang = (req.query.lang as string) || 'en';
+    const difficulty = (req.query.difficulty as string) || 'easy';
+    const count = Math.max(1, Math.min(parseInt(req.query.count as string) || 10, 20));
+
+    if (!VALID_DIFFICULTIES.includes(difficulty as typeof VALID_DIFFICULTIES[number])) {
+      res.status(400).json({ error: 'Invalid difficulty. Must be one of: easy, medium, hard' });
+      return;
+    }
+
+    if (!VALID_LANGS.includes(rawLang as typeof VALID_LANGS[number])) {
+      res.status(400).json({ error: 'Invalid language.' });
+      return;
+    }
+
+    const lang = rawLang as typeof VALID_LANGS[number];
+
+    const results = await wordService.pickWordsForUser(req.userId, lang, difficulty, count);
+    const words = results.map(r => ({
+      seed: generateSeed(),
+      scrambled: r.scrambled,
+      answers: r.answers,
+    }));
+
+    res.json({ words });
+  } catch (error) {
+    const safeLang = ((req.query.lang as string) || 'en').replace(/[\r\n]/g, '');
+    const safeDifficulty = ((req.query.difficulty as string) || 'easy').replace(/[\r\n]/g, '');
+    const err = error as Error;
+    console.error('Word picks error', {
+      lang: safeLang,
+      difficulty: safeDifficulty,
+      name: err.name,
+    });
+    res.status(500).json({ error: 'Failed to pick words' });
   }
 });
 

@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TimedDuration, SubmitScoreResponse } from '@anaroo/shared';
 import { useTimedMode } from '../hooks/useTimedMode';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { AuthModal } from './AuthModal';
 import { AdUnit } from './AdUnit';
 
 interface TimedModeProps {
@@ -35,6 +36,7 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
   const [submitting, setSubmitting] = React.useState(false);
   const [result, setResult] = React.useState<SubmitScoreResponse | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   /** Start game once loaded */
   useEffect(() => {
@@ -208,6 +210,17 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
             </div>
           </div>
         )}
+
+        {!user && (
+          <div className="signup-prompt">
+            <p>Sign up to save your scores!</p>
+            <button className="btn-secondary" onClick={() => setShowAuthModal(true)}>
+              Sign Up
+            </button>
+          </div>
+        )}
+
+        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
         <AdUnit slot="GAME_RESULT" className="ad-h" />
 

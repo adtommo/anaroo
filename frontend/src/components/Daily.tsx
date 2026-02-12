@@ -3,10 +3,11 @@ import { DailyChallenge, SubmitScoreResponse } from '@anaroo/shared';
 import { useDaily } from '../hooks/useDaily';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { AuthModal } from './AuthModal';
 import { AdUnit } from './AdUnit';
 
 export function Daily() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [challenge, setChallenge] = useState<DailyChallenge | null>(null);
   const [completed, setCompleted] = useState(false);
   const [previousTime, setPreviousTime] = useState<number | null>(null);
@@ -16,11 +17,13 @@ export function Daily() {
   const [result, setResult] = useState<SubmitScoreResponse | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  /** Load daily challenge */
+  /** Load daily challenge (re-run when auth resolves) */
   useEffect(() => {
+    if (authLoading) return;
     loadChallenge();
-  }, []);
+  }, [authLoading, user?._id]);
 
   const loadChallenge = async () => {
     try {
@@ -222,6 +225,17 @@ export function Daily() {
 
         {submitting && <div className="submitting">Saving score...</div>}
         {submitError && <div className="submit-error">{submitError}</div>}
+
+        {!user && (
+          <div className="signup-prompt">
+            <p>Sign up to save your scores!</p>
+            <button className="btn-secondary" onClick={() => setShowAuthModal(true)}>
+              Sign Up
+            </button>
+          </div>
+        )}
+
+        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
         <AdUnit slot="GAME_RESULT" className="ad-h" />
 

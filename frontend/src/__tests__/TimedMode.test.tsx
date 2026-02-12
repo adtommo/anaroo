@@ -4,34 +4,36 @@ import userEvent from '@testing-library/user-event';
 import { TimedMode } from '../components/TimedMode';
 import { TimedDuration } from '@anaroo/shared';
 
-vi.mock('../services/api', () => ({
-  apiService: {
-    getWordPick: vi.fn().mockResolvedValue({
-      seed: 'test-seed',
-      scrambled: 'tac',
-      answers: ['cat'],
-    }),
-    submitScore: vi.fn().mockResolvedValue({
-      success: true,
-      run: {
-        _id: 'run-1',
-        userId: 'user-1',
-        mode: 'timed',
-        score: 100,
-        accuracy: 100,
-        wpm: 50,
-        rawWpm: 50,
-        correctChars: 3,
-        incorrectChars: 0,
-        timeElapsed: 5,
-        seed: 'test-seed',
-        comboStreak: 1,
-        createdAt: new Date(),
-      },
-      isPersonalBest: false,
-    }),
-  },
-}));
+vi.mock('../services/api', () => {
+  const word = { seed: 'test-seed', scrambled: 'tac', answers: ['cat'] };
+  return {
+    apiService: {
+      getWordPick: vi.fn().mockResolvedValue(word),
+      getWordPicks: vi.fn().mockResolvedValue({
+        words: Array.from({ length: 20 }, () => word),
+      }),
+      submitScore: vi.fn().mockResolvedValue({
+        success: true,
+        run: {
+          _id: 'run-1',
+          userId: 'user-1',
+          mode: 'timed',
+          score: 100,
+          accuracy: 100,
+          wpm: 50,
+          rawWpm: 50,
+          correctChars: 3,
+          incorrectChars: 0,
+          timeElapsed: 5,
+          seed: 'test-seed',
+          comboStreak: 1,
+          createdAt: new Date(),
+        },
+        isPersonalBest: false,
+      }),
+    },
+  };
+});
 
 vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({

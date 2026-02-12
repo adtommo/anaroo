@@ -22,20 +22,23 @@ class WordService {
   }
 
   async pickWordForUser(
-    userId: string,
+    userId: string | undefined,
     lang: string,
     difficulty: string,
     seed?: string
   ): Promise<WordPickResult> {
     this.validateInputs(lang, difficulty);
-    const key = this.recentKey(userId, lang, difficulty);
 
-    // Read recent signatures to exclude them
+    // Read recent signatures to exclude them (only for authenticated users)
     let recentSignatures: string[] = [];
-    try {
-      recentSignatures = await redisService.listRange(key, 0, RECENT_MAX - 1);
-    } catch {
-      // Redis unavailable — proceed without exclusion
+    let key: string | undefined;
+    if (userId) {
+      key = this.recentKey(userId, lang, difficulty);
+      try {
+        recentSignatures = await redisService.listRange(key, 0, RECENT_MAX - 1);
+      } catch {
+        // Redis unavailable — proceed without exclusion
+      }
     }
 
     // Build safe filter using $eq
@@ -74,11 +77,13 @@ class WordService {
       const wordToScramble = doc!.words[rng.nextInt(0, doc!.words.length - 1)];
       const scrambled = scrambleWord(wordToScramble, rng);
 
-      // Track signature in Redis
-      try {
-        await redisService.listPushAndTrim(key, doc!.signature, RECENT_MAX);
-      } catch {
-        // Redis unavailable — non-fatal
+      // Track signature in Redis (only for authenticated users)
+      if (key) {
+        try {
+          await redisService.listPushAndTrim(key, doc!.signature, RECENT_MAX);
+        } catch {
+          // Redis unavailable — non-fatal
+        }
       }
 
       return { scrambled, answers: doc!.words };
@@ -110,15 +115,30 @@ class WordService {
       const wordToScramble = doc.words[rng.nextInt(0, doc.words.length - 1)];
       const scrambled = scrambleWord(wordToScramble, rng);
 
-      // Track signature in Redis
-      try {
-        await redisService.listPushAndTrim(key, doc.signature, RECENT_MAX);
-      } catch {
-        // Redis unavailable — non-fatal
+      // Track signature in Redis (only for authenticated users)
+      if (key) {
+        try {
+          await redisService.listPushAndTrim(key, doc.signature, RECENT_MAX);
+        } catch {
+          // Redis unavailable — non-fatal
+        }
       }
 
       return { scrambled, answers: doc.words };
     }
+  }
+
+  async pickWordsForUser(
+    userId: string | undefined,
+    lang: string,
+    difficulty: string,
+    count: number
+  ): Promise<WordPickResult[]> {
+    const results: WordPickResult[] = [];
+    for (let i = 0; i < count; i++) {
+      results.push(await this.pickWordForUser(userId, lang, difficulty));
+    }
+    return results;
   }
 
   async resetUser(userId: string, lang: string, difficulty: string): Promise<void> {

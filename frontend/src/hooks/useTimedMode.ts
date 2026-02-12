@@ -53,11 +53,7 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
     async function initGame() {
       try {
         setLoading(true);
-        // Fetch multiple words by making several requests
-        const wordPromises = Array.from({ length: 20 }, () =>
-          apiService.getWordPick(1, language, difficulty as 'easy' | 'medium' | 'hard')
-        );
-        const results = await Promise.all(wordPromises);
+        const { words: results } = await apiService.getWordPicks(20, language, difficulty as 'easy' | 'medium' | 'hard');
 
         if (!isMounted) return;
 
@@ -221,10 +217,7 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
   const resetGame = useCallback(async () => {
     setLoading(true);
     try {
-      const wordPromises = Array.from({ length: 20 }, () =>
-        apiService.getWordPick(1, language, difficulty as 'easy' | 'medium' | 'hard')
-      );
-      const results = await Promise.all(wordPromises);
+      const { words: results } = await apiService.getWordPicks(20, language, difficulty as 'easy' | 'medium' | 'hard');
 
       setGameState(createInitialGameState({
         words: results.map(r => r.scrambled),

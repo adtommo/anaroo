@@ -3,6 +3,7 @@ import { SubmitScoreResponse } from '@anaroo/shared';
 import { useInfiniteSurvival } from '../hooks/useInfiniteSurvival';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { AuthModal } from './AuthModal';
 import { AdUnit } from './AdUnit';
 
 interface InfiniteSurvivalProps {
@@ -33,6 +34,7 @@ export function InfiniteSurvival({ language, difficulty }: InfiniteSurvivalProps
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SubmitScoreResponse | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   /** 🚀 START GAME IMMEDIATELY once loaded */
   useEffect(() => {
@@ -204,6 +206,17 @@ export function InfiniteSurvival({ language, difficulty }: InfiniteSurvivalProps
             </div>
           )}
         </div>
+
+        {!user && (
+          <div className="signup-prompt">
+            <p>Sign up to save your scores!</p>
+            <button className="btn-secondary" onClick={() => setShowAuthModal(true)}>
+              Sign Up
+            </button>
+          </div>
+        )}
+
+        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
         <AdUnit slot="GAME_RESULT" className="ad-h" />
 

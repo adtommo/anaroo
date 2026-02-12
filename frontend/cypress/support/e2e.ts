@@ -1,6 +1,13 @@
 // Cypress E2E support file
 // Uses mock data shared with MSW for consistency
 
+// Ignore AdSense errors in test environment
+Cypress.on('uncaught:exception', (err) => {
+  if (err.message.includes('adsbygoogle') || err.message.includes('googlesyndication')) {
+    return false;
+  }
+});
+
 // Mock data (mirrored from src/mocks/data.ts for Cypress)
 const mockUser = {
   _id: 'user-1',
@@ -31,13 +38,7 @@ const mockLeaderboardEntries = [
   { userId: 'user-5', nickname: 'TestPlayer', score: 1500, accuracy: 88.0, wpm: 60, rank: 5, createdAt: new Date().toISOString() },
 ];
 
-const mockWordPicks = [
-  { seed: 'seed-easy-1', scrambled: 'tac', answers: ['cat', 'act'] },
-  { seed: 'seed-easy-2', scrambled: 'god', answers: ['dog', 'god'] },
-  { seed: 'seed-easy-3', scrambled: 'tar', answers: ['rat', 'tar', 'art'] },
-];
-
-let wordPickIndex = 0;
+const mockWordPick = { seed: 'seed-easy-1', scrambled: 'tac', answers: ['cat', 'act'] };
 
 declare global {
   namespace Cypress {
@@ -48,14 +49,16 @@ declare global {
       mockLogin(nickname?: string): Chainable<void>;
       /** Register with mocked API */
       mockRegister(nickname?: string): Chainable<void>;
+      /** Solve a word by clicking letter tiles in order */
+      solveWord(word: string): Chainable<void>;
+      /** Wait for game to be interactive (isGameActive = true) */
+      waitForGameReady(): Chainable<void>;
     }
   }
 }
 
 // Set up all API mocks
 Cypress.Commands.add('setupMocks', () => {
-  // Reset word pick index
-  wordPickIndex = 0;
 
   // Health check
   cy.intercept('GET', '/api/health', { statusCode: 200, body: { status: 'ok' } });
@@ -86,11 +89,13 @@ Cypress.Commands.add('setupMocks', () => {
   cy.intercept('GET', '/api/daily/status', { statusCode: 200, body: { completed: false } });
   cy.intercept('GET', '/api/daily/history*', { statusCode: 200, body: [] });
 
-  // Word pick
-  cy.intercept('GET', '/api/word/pick*', (req) => {
-    const pick = mockWordPicks[wordPickIndex % mockWordPicks.length];
-    wordPickIndex++;
-    req.reply({ statusCode: 200, body: pick });
+  // Word pick - static response avoids StrictMode double-mount counter drift
+  cy.intercept('GET', '/api/word/pick*', { statusCode: 200, body: mockWordPick });
+
+  // Batch word picks
+  cy.intercept('GET', '/api/word/picks*', {
+    statusCode: 200,
+    body: { words: Array.from({ length: 20 }, () => mockWordPick) },
   });
 
   // Submit score
@@ -198,6 +203,23 @@ Cypress.Commands.add('setupMocks', () => {
   });
 
   cy.intercept('DELETE', '/api/profile', { statusCode: 200, body: { success: true } });
+});
+
+// Wait for the game to be interactive by confirming a tile click works.
+// React's auto-start effect sets isGameActive after the first render,
+// so keyboard/click events may be ignored until that effect runs.
+Cypress.Commands.add('waitForGameReady', () => {
+  cy.get('.letter-tile').first().click();
+  cy.get('.letter-tile.used').should('have.length', 1);
+  cy.contains('Clear').click();
+  cy.get('.letter-tile.used').should('have.length', 0);
+});
+
+// Solve a word by clicking letter tiles in the correct order.
+Cypress.Commands.add('solveWord', (word: string) => {
+  for (const letter of word) {
+    cy.get('.letter-tile').not('.used').contains(letter).click();
+  }
 });
 
 // Mock login - sets up localStorage as if logged in

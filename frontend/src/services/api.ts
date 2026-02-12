@@ -146,6 +146,10 @@ class ApiService {
     return this.request<{ seed: string; scrambled: string; answers: string[] }>(`/word/pick?count=${count}&lang=${lang}&difficulty=${difficulty}`, { credentials: 'include' });
   }
 
+  async getWordPicks(count: number, lang: string = 'en', difficulty: 'easy' | 'medium' | 'hard' = 'easy'): Promise<{ words: Array<{ seed: string; scrambled: string; answers: string[] }> }> {
+    return this.request<{ words: Array<{ seed: string; scrambled: string; answers: string[] }> }>(`/word/picks?count=${count}&lang=${lang}&difficulty=${difficulty}`);
+  }
+
   // Profile endpoints
   async getProfile(): Promise<UserProfile> {
     return this.request<UserProfile>('/profile');

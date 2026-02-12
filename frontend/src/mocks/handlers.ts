@@ -91,6 +91,19 @@ export const handlers = [
     return HttpResponse.json(picks);
   }),
 
+  // Batch word picks
+  http.get(`${API_BASE}/word/picks`, async ({ request }) => {
+    await delay(50);
+    const url = new URL(request.url);
+    const count = Math.min(parseInt(url.searchParams.get('count') || '10', 10), 20);
+
+    const words = [];
+    for (let i = 0; i < count; i++) {
+      words.push(getNextWordPick());
+    }
+    return HttpResponse.json({ words });
+  }),
+
   // Submit score
   http.post(`${API_BASE}/submitScore`, async ({ request }) => {
     await delay(100);

@@ -29,6 +29,30 @@ export class ScoreService {
       throw new Error('Invalid userId');
     }
 
+    // Prevent duplicate daily submissions
+    if (request.mode === GameMode.DAILY) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const existingRun = await RunModel.findOne({
+        userId: { $eq: request.userId },
+        mode: { $eq: GameMode.DAILY },
+        createdAt: { $gte: todayStart, $lte: todayEnd },
+      }).lean();
+
+      if (existingRun) {
+        return {
+          success: true,
+          run: { ...existingRun, _id: existingRun._id.toString() },
+          isPersonalBest: false,
+          dailyRank: undefined as any,
+          globalRank: undefined as any,
+        };
+      }
+    }
+
     // Server-side score calculation with anti-cheat
     const scoreCalc = calculateScore(
       request.correctChars,

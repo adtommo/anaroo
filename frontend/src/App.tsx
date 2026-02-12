@@ -28,18 +28,11 @@ import { RooLogo } from './components/RooLogo';
 
 function MenuPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { settings } = useGameSettings();
   const [selectedMode, setSelectedMode] = useState<GameMode>(GameMode.DAILY);
   const [selectedDuration, setSelectedDuration] = useState<TimedDuration>(TimedDuration.SIXTY);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleStartGame = () => {
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
-    // Navigate to game with mode params
     const params = new URLSearchParams({
       mode: selectedMode,
       duration: selectedDuration.toString(),
@@ -50,23 +43,17 @@ function MenuPage() {
   };
 
   return (
-    <>
-      <div className="menu">
-        <GameDemo />
+    <div className="menu">
+      <GameDemo />
 
-        <GameSelector
-          selectedMode={selectedMode}
-          selectedDuration={selectedDuration}
-          onModeChange={setSelectedMode}
-          onDurationChange={setSelectedDuration}
-          onStartGame={handleStartGame}
-        />
-      </div>
-
-      {showAuthModal && (
-        <AuthModal onClose={() => setShowAuthModal(false)} />
-      )}
-    </>
+      <GameSelector
+        selectedMode={selectedMode}
+        selectedDuration={selectedDuration}
+        onModeChange={setSelectedMode}
+        onDurationChange={setSelectedDuration}
+        onStartGame={handleStartGame}
+      />
+    </div>
   );
 }
 

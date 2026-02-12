@@ -33,11 +33,8 @@ export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurviva
 
   /** Fetch a batch of distinct words */
   const fetchWords = useCallback(async (count: number) => {
-    const promises = Array.from({ length: count }, () =>
-      apiService.getWordPick(1, language, difficulty as 'easy' | 'medium' | 'hard')
-    );
-    const results = await Promise.all(promises);
-    return results;
+    const { words } = await apiService.getWordPicks(count, language, difficulty as 'easy' | 'medium' | 'hard');
+    return words;
   }, [language, difficulty]);
 
   /* Fetch words from backend on mount or when settings change */

@@ -1191,6 +1191,19 @@ button {
   border-radius: var(--radius-md);
 }
 
+.signup-prompt {
+  text-align: center;
+  padding: var(--spacing-md);
+  background: rgba(126, 200, 80, 0.1);
+  border-radius: var(--radius-md);
+
+  p {
+    margin: 0 0 var(--spacing-sm);
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+  }
+}
+
 .actions {
   display: flex;
   gap: var(--spacing-md);
