@@ -3,6 +3,7 @@ import { TimedDuration, SubmitScoreResponse } from '@anaroo/shared';
 import { useTimedMode } from '../hooks/useTimedMode';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { AdUnit } from './AdUnit';
 
 interface TimedModeProps {
   duration: TimedDuration;
@@ -207,6 +208,8 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
             </div>
           </div>
         )}
+
+        <AdUnit slot="GAME_RESULT" className="ad-h" />
 
         <div className="actions">
           <button onClick={resetGame} className="btn-primary">

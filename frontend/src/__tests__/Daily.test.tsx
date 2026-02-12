@@ -209,3 +209,155 @@ describe('Daily - Game Simulation', () => {
     expect(usedTiles).toHaveLength(1);
   });
 });
+
+describe('Daily - Edge Cases', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('clicking an already-selected (disabled) tile does nothing', async () => {
+    render(<Daily />);
+    await waitForGameReady();
+
+    // Click 't' tile (index 0)
+    await clickLetter('t');
+
+    // The 't' tile should now be disabled
+    const allTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile')
+    ) as HTMLButtonElement[];
+    const tTile = allTiles[0];
+    expect(tTile).toBeDisabled();
+
+    // Clicking the disabled tile should have no effect
+    await userEvent.click(tTile);
+
+    // Should still have exactly 1 used tile
+    const usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(1);
+  });
+
+  it('keyboard: pressing a letter already fully selected does nothing', async () => {
+    render(<Daily />);
+    await waitForGameReady();
+
+    // Word is "tac" - only one 't'. Click it.
+    await clickLetter('t');
+
+    // Press 't' again via keyboard - should be no-op since only 't' tile is already used
+    await userEvent.keyboard('t');
+
+    const usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(1);
+  });
+
+  it('keyboard: non-letter keys are ignored', async () => {
+    render(<Daily />);
+    await waitForGameReady();
+
+    // Press numbers and special chars
+    await userEvent.keyboard('123!@#');
+
+    const usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(0);
+  });
+
+  it('keyboard: Backspace removes last letter', async () => {
+    render(<Daily />);
+    await waitForGameReady();
+
+    await userEvent.keyboard('c');
+    await userEvent.keyboard('a');
+
+    let usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(2);
+
+    await userEvent.keyboard('{Backspace}');
+
+    usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(1);
+  });
+
+  it('clear button resets all selected tiles', async () => {
+    render(<Daily />);
+    await waitForGameReady();
+
+    await clickLetter('c');
+    await clickLetter('a');
+
+    let usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(2);
+
+    await userEvent.click(screen.getByText('Clear'));
+
+    usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(0);
+  });
+
+  it('backspace and clear are disabled when no letters selected', async () => {
+    render(<Daily />);
+    await waitForGameReady();
+
+    const backspaceBtn = screen.getByText(/Backspace/);
+    const clearBtn = screen.getByText('Clear');
+
+    expect(backspaceBtn).toBeDisabled();
+    expect(clearBtn).toBeDisabled();
+  });
+
+  it('multiple wrong guesses track incorrect chars without ending game', async () => {
+    render(<Daily />);
+    await waitForGameReady();
+
+    // First wrong guess
+    await spellWord('tac');
+    await waitFor(() => {
+      const tiles = screen.getAllByRole('button').filter(
+        btn => btn.classList.contains('letter-tile') && !(btn as HTMLButtonElement).disabled
+      );
+      expect(tiles).toHaveLength(3);
+    });
+
+    // Second wrong guess
+    await spellWord('tac');
+    await waitFor(() => {
+      const tiles = screen.getAllByRole('button').filter(
+        btn => btn.classList.contains('letter-tile') && !(btn as HTMLButtonElement).disabled
+      );
+      expect(tiles).toHaveLength(3);
+    });
+
+    // Game should still be active
+    expect(screen.queryByText('daily complete')).not.toBeInTheDocument();
+
+    // Can still solve correctly
+    await spellWord('cat');
+    await waitFor(() => {
+      expect(screen.getByText('daily complete')).toBeInTheDocument();
+    });
+  });
+
+  it('shows timer during gameplay', async () => {
+    render(<Daily />);
+    await waitForGameReady();
+
+    // Timer should be visible with a "s" suffix
+    const timerValue = document.querySelector('.timer-value');
+    expect(timerValue).toBeInTheDocument();
+    expect(timerValue?.textContent).toMatch(/\d+\.\d+s/);
+  });
+});

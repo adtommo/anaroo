@@ -1,6 +1,6 @@
 import type { Preview } from '@storybook/react-vite';
 import { initialize, mswLoader } from 'msw-storybook-addon';
-import "../src/App.css";
+import "../src/App.scss";
 
 // Initialize MSW
 initialize({

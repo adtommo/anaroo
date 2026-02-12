@@ -18,7 +18,8 @@ import { AccessibilityStatement } from './components/AccessibilityStatement';
 import { PublicProfile } from './components/PublicProfile';
 import { ProfileAvatar } from './components/ProfileAvatar';
 import { GameDemo } from './components/GameDemo';
-import './App.css';
+import { AdUnit } from './components/AdUnit';
+import './App.scss';
 import { RooLogo } from './components/RooLogo';
 
 /* -----------------------------
@@ -233,6 +234,7 @@ function App() {
   const [showCookieSettings, setShowCookieSettings] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
+  const isPlaying = location.pathname === '/play';
 
   return (
     <div className="app">
@@ -293,21 +295,31 @@ function App() {
         </div>
       </nav>
 
-      <main id="main-content" className="main-content" role="main">
-        <Routes>
-          <Route path="/" element={<MenuPage />} />
-          <Route path="/play" element={<GamePage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/player/:nickname" element={<PublicProfile />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/security" element={<SecurityPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/accessibility" element={<AccessibilityPage />} />
-        </Routes>
-      </main>
+      <div className="app-body">
+        <div className={`ad-sidebar ad-sidebar-left${isPlaying ? ' focus' : ''}`}>
+          <AdUnit slot="LEFT_SIDEBAR" format="vertical" />
+        </div>
+
+        <main id="main-content" className="main-content" role="main">
+          <Routes>
+            <Route path="/" element={<MenuPage />} />
+            <Route path="/play" element={<GamePage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/player/:nickname" element={<PublicProfile />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/security" element={<SecurityPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/accessibility" element={<AccessibilityPage />} />
+          </Routes>
+        </main>
+
+        <div className={`ad-sidebar ad-sidebar-right${isPlaying ? ' focus' : ''}`}>
+          <AdUnit slot="RIGHT_SIDEBAR" format="vertical" />
+        </div>
+      </div>
 
       <Footer onOpenCookieSettings={() => setShowCookieSettings(true)} />
 

@@ -158,3 +158,157 @@ describe('TimedMode - Game Simulation', () => {
     expect(usedTiles).toHaveLength(1);
   });
 });
+
+describe('TimedMode - Edge Cases', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('clicking an already-selected tile does nothing', async () => {
+    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    await waitForGameReady();
+
+    await clickLetter('t');
+
+    const allTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile')
+    ) as HTMLButtonElement[];
+    const tTile = allTiles[0];
+    expect(tTile).toBeDisabled();
+
+    // Click the disabled tile again
+    await userEvent.click(tTile);
+
+    const usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(1);
+  });
+
+  it('keyboard: pressing already-used letter key is a no-op', async () => {
+    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    await waitForGameReady();
+
+    // Use the 't' tile
+    await clickLetter('t');
+
+    // Press 't' again via keyboard - only one 't' exists
+    await userEvent.keyboard('t');
+
+    const usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(1);
+  });
+
+  it('keyboard: non-letter keys are ignored', async () => {
+    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    await waitForGameReady();
+
+    await userEvent.keyboard('123!@#');
+
+    const usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(0);
+  });
+
+  it('keyboard Backspace removes last letter', async () => {
+    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    await waitForGameReady();
+
+    await userEvent.keyboard('c');
+    await userEvent.keyboard('a');
+
+    let usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(2);
+
+    await userEvent.keyboard('{Backspace}');
+
+    usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(1);
+  });
+
+  it('clear button resets all selected tiles', async () => {
+    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    await waitForGameReady();
+
+    await clickLetter('c');
+    await clickLetter('a');
+
+    await userEvent.click(screen.getByText('Clear'));
+
+    const usedTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+    );
+    expect(usedTiles).toHaveLength(0);
+  });
+
+  it('backspace and clear are disabled with no letters selected', async () => {
+    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    await waitForGameReady();
+
+    expect(screen.getByText(/Backspace/)).toBeDisabled();
+    expect(screen.getByText('Clear')).toBeDisabled();
+  });
+
+  it('wrong guess does not advance word index but resets input', async () => {
+    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    await waitForGameReady();
+
+    expect(screen.getByText('Words: 0')).toBeInTheDocument();
+
+    await spellWord('tac');
+
+    // Words count should still be 0
+    await waitFor(() => {
+      expect(screen.getByText('Words: 0')).toBeInTheDocument();
+    });
+
+    // Input should be cleared - all tiles available again
+    const availableTiles = screen.getAllByRole('button').filter(
+      btn => btn.classList.contains('letter-tile') && !(btn as HTMLButtonElement).disabled
+    );
+    expect(availableTiles).toHaveLength(3);
+  });
+
+  it('multiple wrong guesses followed by correct solve', async () => {
+    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    await waitForGameReady();
+
+    // Two wrong guesses
+    await spellWord('tac');
+    await waitFor(() => {
+      const tiles = screen.getAllByRole('button').filter(
+        btn => btn.classList.contains('letter-tile') && !(btn as HTMLButtonElement).disabled
+      );
+      expect(tiles).toHaveLength(3);
+    });
+
+    await spellWord('tac');
+    await waitFor(() => {
+      const tiles = screen.getAllByRole('button').filter(
+        btn => btn.classList.contains('letter-tile') && !(btn as HTMLButtonElement).disabled
+      );
+      expect(tiles).toHaveLength(3);
+    });
+
+    // Now solve correctly
+    await spellWord('cat');
+    await waitFor(() => {
+      expect(screen.getByText('Words: 1')).toBeInTheDocument();
+    });
+  });
+
+  it('shows word count and combo in game header', async () => {
+    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    await waitForGameReady();
+
+    expect(screen.getByText('Words: 0')).toBeInTheDocument();
+    expect(screen.getByText('Combo: 0')).toBeInTheDocument();
+  });
+});

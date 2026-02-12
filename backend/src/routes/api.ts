@@ -18,7 +18,7 @@ import { UserModel } from '../models';
 import { AuthRequest, requireAuth, generateToken } from '../middleware/auth';
 
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
-const VALID_LANGS = ['en'] as const;
+const VALID_LANGS = ['en', 'es', 'fr', 'de'] as const;
 
 const router = Router();
 
