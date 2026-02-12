@@ -3,6 +3,7 @@ import { SubmitScoreResponse } from '@anaroo/shared';
 import { useInfiniteSurvival } from '../hooks/useInfiniteSurvival';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { AdUnit } from './AdUnit';
 
 interface InfiniteSurvivalProps {
   language: string;
@@ -203,6 +204,8 @@ export function InfiniteSurvival({ language, difficulty }: InfiniteSurvivalProps
             </div>
           )}
         </div>
+
+        <AdUnit slot="GAME_RESULT" className="ad-h" />
 
         <div className="actions">
           <button className="btn-primary" onClick={resetGame}>

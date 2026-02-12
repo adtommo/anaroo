@@ -12,8 +12,14 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    include: ['@anaroo/shared'],
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,
+    commonjsOptions: {
+      include: [/shared/, /node_modules/],
+    },
   },
 });

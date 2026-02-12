@@ -24,6 +24,14 @@ const config: StorybookConfig = {
   ],
   framework: getAbsolutePath('@storybook/react-vite'),
   staticDirs: ['../public'],
+  viteFinal: async (config) => {
+    config.build = config.build || {};
+    config.build.commonjsOptions = {
+      ...config.build.commonjsOptions,
+      include: [/shared/, /node_modules/],
+    };
+    return config;
+  },
 };
 
 export default config;

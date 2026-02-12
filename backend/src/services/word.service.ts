@@ -4,7 +4,7 @@ import { AnagramGroupModel } from '../models';
 import { redisService } from './redis.service';
 
 const RECENT_MAX = 100;
-const ALLOWED_LANGS = ['en', 'fr', 'es'];
+const ALLOWED_LANGS = ['en', 'es', 'fr', 'de'];
 const ALLOWED_DIFFICULTIES = ['easy', 'medium', 'hard'];
 
 class WordService {

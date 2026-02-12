@@ -3,6 +3,7 @@ import { DailyChallenge, SubmitScoreResponse } from '@anaroo/shared';
 import { useDaily } from '../hooks/useDaily';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { AdUnit } from './AdUnit';
 
 export function Daily() {
   const { user } = useAuth();
@@ -221,6 +222,8 @@ export function Daily() {
 
         {submitting && <div className="submitting">Saving score...</div>}
         {submitError && <div className="submit-error">{submitError}</div>}
+
+        <AdUnit slot="GAME_RESULT" className="ad-h" />
 
         <div className="actions">
           <button className="btn-primary" disabled>
