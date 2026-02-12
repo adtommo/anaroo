@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.3...anaroo-v0.1.4) (2026-02-12)
+
+
+### Features
+
+* add languages ([f2f31ca](https://github.com/adtommo/anaroo/commit/f2f31ca08f50bfe3e76cfcc8d0b3f1d48c6cac30))
+
 ## [0.1.3](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.2...anaroo-v0.1.3) (2026-02-11)
 
 
