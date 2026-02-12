@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.4...anaroo-v0.1.5) (2026-02-12)
+
+
+### Features
+
+* fix rate limiting, testing, can play without auth ([7fa8389](https://github.com/adtommo/anaroo/commit/7fa8389f28ae9c1398242e401185d620e48a00e4))
+
 ## [0.1.4](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.3...anaroo-v0.1.4) (2026-02-12)
 
 
