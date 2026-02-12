@@ -4,21 +4,30 @@ describe('App', () => {
     cy.visit('/');
   });
 
-  it('loads the main menu', () => {
+  it('loads the main menu with logo and play button', () => {
     cy.contains('anaroo').should('be.visible');
-    cy.contains('Start Game').should('be.visible');
-    cy.contains('View Leaderboard').should('be.visible');
+    cy.get('.btn-start').should('be.visible').and('contain', 'play');
   });
 
   it('shows the navbar with login icon when not authenticated', () => {
-    // Icon-based nav doesn't show text, but should have title attribute
     cy.get('.nav-icon[title="Sign In"]').should('be.visible');
   });
 
-  it('displays all three game modes', () => {
-    cy.contains('Daily').should('be.visible');
-    cy.contains('Timed').should('be.visible');
-    cy.contains('Infinite Survival').should('be.visible');
+  it('displays all three game mode cards', () => {
+    cy.get('.game-card').should('have.length', 3);
+    cy.get('.game-card-title').eq(0).should('contain', 'daily');
+    cy.get('.game-card-title').eq(1).should('contain', 'timed');
+    cy.get('.game-card-title').eq(2).should('contain', 'survival');
+  });
+
+  it('shows mode descriptions', () => {
+    cy.contains('one word per day').should('be.visible');
+  });
+
+  it('shows game demo animation', () => {
+    cy.get('.game-demo').should('be.visible');
+    cy.get('.demo-guess-row').should('be.visible');
+    cy.get('.demo-scrambled-row').should('be.visible');
   });
 });
 
@@ -28,32 +37,51 @@ describe('Mode Selection', () => {
     cy.visit('/');
   });
 
-  it('selects Daily mode', () => {
-    cy.contains('button', 'Daily').click();
-    cy.contains('One word per day').should('be.visible');
+  it('selects daily mode card', () => {
+    cy.get('.game-card').eq(0).click();
+    cy.get('.game-card').eq(0).should('have.class', 'selected');
+    cy.contains('one word per day').should('be.visible');
   });
 
-  it('selects Timed mode and shows duration picker', () => {
-    cy.contains('button', 'Timed').click();
+  it('selects timed mode and shows duration picker', () => {
+    cy.get('.game-card').eq(1).click();
+    cy.get('.game-card').eq(1).should('have.class', 'selected');
     cy.contains('30s').should('be.visible');
     cy.contains('60s').should('be.visible');
     cy.contains('120s').should('be.visible');
   });
 
   it('hides duration picker for non-timed modes', () => {
-    cy.contains('button', 'Daily').click();
-    cy.contains('30s').should('not.exist');
+    cy.get('.game-card').eq(0).click();
+    cy.contains('button', '30s').should('not.exist');
   });
 
   it('selects different timed durations', () => {
-    cy.contains('button', 'Timed').click();
+    cy.get('.game-card').eq(1).click();
     cy.contains('button', '30s').click();
     cy.contains('button', '30s').should('have.class', 'active');
   });
 
-  it('selects Infinite Survival mode', () => {
-    cy.contains('button', 'Infinite Survival').click();
-    cy.contains('Endless words').should('be.visible');
+  it('selects survival mode', () => {
+    cy.get('.game-card').eq(2).click();
+    cy.get('.game-card').eq(2).should('have.class', 'selected');
+    cy.contains('endless words').should('be.visible');
+  });
+
+  it('shows difficulty options for timed mode', () => {
+    cy.get('.game-card').eq(1).click();
+    cy.contains('button', 'easy').should('be.visible');
+    cy.contains('button', 'medium').should('be.visible');
+    cy.contains('button', 'hard').should('be.visible');
+  });
+
+  it('hides difficulty for daily mode', () => {
+    cy.get('.game-card').eq(0).click();
+    cy.get('.settings-label').contains('difficulty').should('not.exist');
+  });
+
+  it('shows language selector', () => {
+    cy.get('.settings-label').contains('language').should('be.visible');
   });
 });
 
@@ -70,7 +98,7 @@ describe('Auth Modal', () => {
   });
 
   it('opens auth modal when starting game without auth', () => {
-    cy.contains('Start Game').click();
+    cy.get('.btn-start').click();
     cy.get('.modal-overlay').should('be.visible');
   });
 
@@ -93,22 +121,30 @@ describe('Auth Modal', () => {
     cy.contains('Already have an account').click();
     cy.get('h2').should('contain', 'Sign In');
   });
+
+  it('requires nickname to be entered', () => {
+    cy.get('.nav-icon[title="Sign In"]').click();
+    cy.get('input#nickname').should('be.visible');
+    // Nickname field should be required
+    cy.get('input#nickname').should('have.attr', 'required');
+  });
 });
 
 describe('Leaderboard', () => {
   beforeEach(() => {
     cy.setupMocks();
-    cy.visit('/');
   });
 
-  it('navigates to leaderboard view', () => {
-    cy.contains('View Leaderboard').click();
+  it('navigates to leaderboard via navbar icon', () => {
+    cy.visit('/');
+    cy.get('.nav-icon[title="Leaderboard"]').click();
+    cy.url().should('include', '/leaderboard');
     cy.contains('h2', 'Leaderboard').should('be.visible');
     cy.contains('← Back').should('be.visible');
   });
 
   it('shows mode tabs on leaderboard', () => {
-    cy.contains('View Leaderboard').click();
+    cy.visit('/leaderboard');
     cy.get('.mode-tabs').within(() => {
       cy.contains('Daily');
       cy.contains('Timed');
@@ -117,7 +153,7 @@ describe('Leaderboard', () => {
   });
 
   it('shows type tabs (Daily / All-Time)', () => {
-    cy.contains('View Leaderboard').click();
+    cy.visit('/leaderboard');
     cy.get('.type-tabs').within(() => {
       cy.contains('Daily');
       cy.contains('All-Time');
@@ -125,9 +161,31 @@ describe('Leaderboard', () => {
   });
 
   it('navigates back to menu from leaderboard', () => {
-    cy.contains('View Leaderboard').click();
+    cy.visit('/leaderboard');
     cy.contains('← Back').click();
-    cy.contains('Start Game').should('be.visible');
+    cy.get('.btn-start').should('be.visible');
+  });
+
+  it('displays leaderboard entries', () => {
+    cy.visit('/leaderboard');
+    cy.contains('SpeedRunner').should('be.visible');
+    cy.contains('WordMaster').should('be.visible');
+  });
+
+  it('switches between daily and global views', () => {
+    cy.visit('/leaderboard');
+    cy.get('.type-tabs').contains('All-Time').click();
+    cy.contains('SpeedRunner').should('be.visible');
+    cy.get('.type-tabs').contains('Daily').click();
+    cy.contains('SpeedRunner').should('be.visible');
+  });
+
+  it('switches between game mode tabs', () => {
+    cy.visit('/leaderboard');
+    cy.get('.mode-tabs').contains('Timed').click();
+    cy.contains('SpeedRunner').should('be.visible');
+    cy.get('.mode-tabs').contains('Survival').click();
+    cy.contains('SpeedRunner').should('be.visible');
   });
 });
 
@@ -139,15 +197,12 @@ describe('Navigation', () => {
   });
 
   it('navigates via navbar icons', () => {
-    // Click leaderboard icon
     cy.get('.nav-icon[title="Leaderboard"]').click();
     cy.url().should('include', '/leaderboard');
 
-    // Click about icon
     cy.get('.nav-icon[title="About"]').click();
     cy.url().should('include', '/about');
 
-    // Click play icon to go home
     cy.get('.nav-icon[title="Play"]').click();
     cy.url().should('eq', Cypress.config().baseUrl + '/');
   });
@@ -160,6 +215,12 @@ describe('Navigation', () => {
   it('navigates to profile when clicking user', () => {
     cy.get('.nav-user').click();
     cy.url().should('include', '/profile');
+  });
+
+  it('highlights active nav icon', () => {
+    cy.get('.nav-icon[title="Play"]').should('have.class', 'active');
+    cy.get('.nav-icon[title="Leaderboard"]').click();
+    cy.get('.nav-icon[title="Leaderboard"]').should('have.class', 'active');
   });
 });
 
@@ -184,5 +245,21 @@ describe('Footer Navigation', () => {
     cy.get('.footer').contains('terms').click();
     cy.url().should('include', '/terms');
     cy.contains('Terms of Service').should('be.visible');
+  });
+});
+
+describe('Skip Link Accessibility', () => {
+  beforeEach(() => {
+    cy.setupMocks();
+    cy.visit('/');
+  });
+
+  it('has a skip-to-content link', () => {
+    cy.get('.skip-link').should('exist');
+    cy.get('.skip-link').should('have.attr', 'href', '#main-content');
+  });
+
+  it('main content has the correct id', () => {
+    cy.get('#main-content').should('exist');
   });
 });
