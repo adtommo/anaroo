@@ -1,5 +1,19 @@
-import { UserProfile, calculateLevel, calculateGameXp, AVATARS, THEMES, AvatarId, ThemeId } from '@anaroo/shared';
+import {
+  UserProfile,
+  EnrichedUserProfile,
+  RecentRun,
+  ProfileRankings,
+  GameMode,
+  TimedDuration,
+  calculateLevel,
+  calculateGameXp,
+  AVATARS,
+  THEMES,
+  AvatarId,
+  ThemeId,
+} from '@anaroo/shared';
 import { UserModel, PersonalStatsModel, RunModel, BestScoreModel } from '../models';
+import { redisService } from './redis.service';
 
 class ProfileService {
   /**
@@ -48,6 +62,61 @@ class ProfileService {
     const user = await UserModel.findOne({ nickname }).lean();
     if (!user) return null;
     return this.getProfile(user._id.toString());
+  }
+
+  /**
+   * Get enriched profile with recent runs and leaderboard rankings
+   */
+  async getEnrichedProfile(userId: string): Promise<EnrichedUserProfile | null> {
+    const baseProfile = await this.getProfile(userId);
+    if (!baseProfile) return null;
+
+    // Fetch recent runs (last 10)
+    const runs = await RunModel.find({ userId: { $eq: userId } })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    const recentRuns: RecentRun[] = runs.map((run) => ({
+      mode: run.mode,
+      score: run.score,
+      wpm: run.wpm,
+      accuracy: run.accuracy,
+      timeElapsed: run.timeElapsed,
+      timedDuration: run.timedDuration,
+      createdAt: run.createdAt,
+    }));
+
+    // Fetch rankings for each mode in parallel
+    const [dailyRank, timed30Rank, timed60Rank, timed120Rank, survivalRank] = await Promise.all([
+      redisService.getUserRank(userId, GameMode.DAILY).catch(() => null),
+      redisService.getUserRank(userId, GameMode.TIMED, TimedDuration.THIRTY).catch(() => null),
+      redisService.getUserRank(userId, GameMode.TIMED, TimedDuration.SIXTY).catch(() => null),
+      redisService.getUserRank(userId, GameMode.TIMED, TimedDuration.ONE_TWENTY).catch(() => null),
+      redisService.getUserRank(userId, GameMode.INFINITE_SURVIVAL).catch(() => null),
+    ]);
+
+    // Fetch leaderboard sizes in parallel
+    const [dailySize, timed30Size, timed60Size, timed120Size, survivalSize] = await Promise.all([
+      redisService.getLeaderboardSize(GameMode.DAILY, 'global').catch(() => 0),
+      redisService.getLeaderboardSize(GameMode.TIMED, 'global', TimedDuration.THIRTY).catch(() => 0),
+      redisService.getLeaderboardSize(GameMode.TIMED, 'global', TimedDuration.SIXTY).catch(() => 0),
+      redisService.getLeaderboardSize(GameMode.TIMED, 'global', TimedDuration.ONE_TWENTY).catch(() => 0),
+      redisService.getLeaderboardSize(GameMode.INFINITE_SURVIVAL, 'global').catch(() => 0),
+    ]);
+
+    const rankings: ProfileRankings = {};
+    if (dailyRank) rankings.daily = { rank: dailyRank.globalRank, totalPlayers: dailySize };
+    if (timed30Rank) rankings.timed30 = { rank: timed30Rank.globalRank, totalPlayers: timed30Size };
+    if (timed60Rank) rankings.timed60 = { rank: timed60Rank.globalRank, totalPlayers: timed60Size };
+    if (timed120Rank) rankings.timed120 = { rank: timed120Rank.globalRank, totalPlayers: timed120Size };
+    if (survivalRank) rankings.survival = { rank: survivalRank.globalRank, totalPlayers: survivalSize };
+
+    return {
+      ...baseProfile,
+      recentRuns,
+      rankings,
+    };
   }
 
   /**

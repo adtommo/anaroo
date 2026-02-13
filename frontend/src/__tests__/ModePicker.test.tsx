@@ -14,14 +14,14 @@ describe('ModePicker', () => {
 
   it('renders all three mode buttons', () => {
     render(<ModePicker {...defaultProps} />);
-    expect(screen.getByText('daily')).toBeInTheDocument();
-    expect(screen.getByText('timed')).toBeInTheDocument();
-    expect(screen.getByText('survival')).toBeInTheDocument();
+    expect(screen.getByText('Daily')).toBeInTheDocument();
+    expect(screen.getByText('Timed')).toBeInTheDocument();
+    expect(screen.getByText('Survival')).toBeInTheDocument();
   });
 
   it('highlights the selected mode', () => {
     render(<ModePicker {...defaultProps} selectedMode={GameMode.DAILY} />);
-    const dailyButton = screen.getByText('daily').closest('button');
+    const dailyButton = screen.getByText('Daily').closest('button');
     expect(dailyButton?.className).toContain('active');
   });
 
@@ -29,7 +29,7 @@ describe('ModePicker', () => {
     const onModeChange = vi.fn();
     render(<ModePicker {...defaultProps} onModeChange={onModeChange} />);
 
-    await userEvent.click(screen.getByText('daily'));
+    await userEvent.click(screen.getByText('Daily'));
     expect(onModeChange).toHaveBeenCalledWith(GameMode.DAILY);
   });
 

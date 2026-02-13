@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TimedDuration, SubmitScoreResponse } from '@anaroo/shared';
 import { useTimedMode } from '../hooks/useTimedMode';
 import { useAuth } from '../contexts/AuthContext';
+import { useSound } from '../hooks/useSound';
 import { apiService } from '../services/api';
 import { AuthModal } from './AuthModal';
 import { AdUnit } from './AdUnit';
@@ -28,15 +29,33 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
     removeLastLetter,
     clearGuess,
     startGame,
+    skipWord,
     resetGame,
     loading,
     wordStats,
+    skippedWords,
+    skipCooldownRemaining,
   } = useTimedMode({ duration, language, difficulty });
 
+  const { playCorrect, playIncorrect, playSkip, playGameOver } = useSound();
   const [submitting, setSubmitting] = React.useState(false);
   const [result, setResult] = React.useState<SubmitScoreResponse | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  /** Sound effects */
+  const prevLastResult = useRef(lastResult);
+  useEffect(() => {
+    if (lastResult && lastResult !== prevLastResult.current) {
+      if (lastResult === 'correct') playCorrect();
+      else playIncorrect();
+    }
+    prevLastResult.current = lastResult;
+  }, [lastResult, playCorrect, playIncorrect]);
+
+  useEffect(() => {
+    if (gameState?.endTime) playGameOver();
+  }, [gameState?.endTime, playGameOver]);
 
   /** Start game once loaded */
   useEffect(() => {
@@ -187,9 +206,9 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
 
         {submitError && <div className="submit-error">{submitError}</div>}
 
-        {/* Word list with stats */}
-        {wordStats.length > 0 && (
-          <div className="word-lists">
+        {/* Word lists */}
+        <div className="word-lists">
+          {wordStats.length > 0 && (
             <div className="word-list solved">
               <h3 className="word-list-title">Words Solved ({wordStats.length})</h3>
               <div className="word-stats-list">
@@ -208,8 +227,19 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
                 ))}
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {skippedWords.length > 0 && (
+            <div className="word-list skipped">
+              <h3 className="word-list-title">Skipped ({skippedWords.length})</h3>
+              <div className="word-list-items">
+                {skippedWords.map((word, i) => (
+                  <span key={i} className="word-item incorrect">{word}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {!user && (
           <div className="signup-prompt">
@@ -298,6 +328,13 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
           disabled={currentGuess.length === 0}
         >
           Clear
+        </button>
+        <button
+          className="control-button"
+          onClick={() => { skipWord(); playSkip(); }}
+          disabled={skipCooldownRemaining > 0}
+        >
+          {skipCooldownRemaining > 0 ? `Skip (-5s) ${skipCooldownRemaining.toFixed(1)}s` : 'Skip (-5s)'}
         </button>
       </div>
     </div>

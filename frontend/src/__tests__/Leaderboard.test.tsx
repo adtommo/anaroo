@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Leaderboard } from '../components/Leaderboard';
-import { GameMode } from '@anaroo/shared';
+import { GameMode, TimedDuration } from '@anaroo/shared';
 
 const renderWithRouter = (ui: React.ReactElement) => {
   return render(<MemoryRouter>{ui}</MemoryRouter>);
@@ -50,27 +50,20 @@ describe('Leaderboard', () => {
     });
   });
 
-  it('displays medal emojis for top 3', async () => {
+  it('renders rank numbers for entries', async () => {
     renderWithRouter(<Leaderboard mode={GameMode.TIMED} type="daily" />);
 
     await waitFor(() => {
-      expect(screen.getByText('Daily Leaderboard')).toBeInTheDocument();
+      expect(screen.getByText('1')).toBeInTheDocument();
+      expect(screen.getByText('4')).toBeInTheDocument();
     });
   });
 
-  it('shows rank number for positions beyond 3', async () => {
+  it('renders table with score column header', async () => {
     renderWithRouter(<Leaderboard mode={GameMode.TIMED} type="daily" />);
 
     await waitFor(() => {
-      expect(screen.getByText('#4')).toBeInTheDocument();
-    });
-  });
-
-  it('shows global leaderboard heading', async () => {
-    renderWithRouter(<Leaderboard mode={GameMode.TIMED} type="global" />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Global Leaderboard')).toBeInTheDocument();
+      expect(screen.getByText('score')).toBeInTheDocument();
     });
   });
 
@@ -107,7 +100,7 @@ describe('Leaderboard', () => {
     );
 
     await waitFor(() => {
-      expect(apiService.getDailyLeaderboard).toHaveBeenCalledWith(GameMode.TIMED);
+      expect(apiService.getDailyLeaderboard).toHaveBeenCalledWith(GameMode.TIMED, 50, undefined);
     });
 
     rerender(
@@ -117,7 +110,7 @@ describe('Leaderboard', () => {
     );
 
     await waitFor(() => {
-      expect(apiService.getDailyLeaderboard).toHaveBeenCalledWith(GameMode.DAILY);
+      expect(apiService.getDailyLeaderboard).toHaveBeenCalledWith(GameMode.DAILY, 50, undefined);
     });
   });
 
@@ -126,6 +119,32 @@ describe('Leaderboard', () => {
 
     await waitFor(() => {
       expect(screen.getByText('5,000')).toBeInTheDocument();
+    });
+  });
+
+  it('passes timedDuration to API for timed mode', async () => {
+    const { apiService } = await import('../services/api');
+
+    renderWithRouter(
+      <Leaderboard mode={GameMode.TIMED} type="global" timedDuration={TimedDuration.THIRTY} />
+    );
+
+    await waitFor(() => {
+      expect(apiService.getGlobalLeaderboard).toHaveBeenCalledWith(GameMode.TIMED, 50, TimedDuration.THIRTY);
+    });
+  });
+
+  it('shows time instead of score for daily mode', async () => {
+    const { apiService } = await import('../services/api');
+    vi.mocked(apiService.getDailyLeaderboard).mockResolvedValueOnce([
+      { userId: '1', nickname: 'FastPlayer', score: 0, rank: 1, timeElapsed: 12.5 },
+    ]);
+
+    renderWithRouter(<Leaderboard mode={GameMode.DAILY} type="daily" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('12.5s')).toBeInTheDocument();
+      expect(screen.getByText('time')).toBeInTheDocument();
     });
   });
 });

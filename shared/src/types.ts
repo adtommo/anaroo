@@ -72,6 +72,31 @@ export interface LeaderboardEntry {
   avatarId?: string;
   level?: number;
   profileImage?: string;
+  timeElapsed?: number;
+  timedDuration?: TimedDuration;
+}
+
+export interface RecentRun {
+  mode: GameMode;
+  score: number;
+  wpm: number;
+  accuracy: number;
+  timeElapsed: number;
+  timedDuration?: TimedDuration;
+  createdAt: Date;
+}
+
+export interface ProfileRankings {
+  daily?: { rank: number; totalPlayers: number };
+  timed30?: { rank: number; totalPlayers: number };
+  timed60?: { rank: number; totalPlayers: number };
+  timed120?: { rank: number; totalPlayers: number };
+  survival?: { rank: number; totalPlayers: number };
+}
+
+export interface EnrichedUserProfile extends UserProfile {
+  recentRuns: RecentRun[];
+  rankings: ProfileRankings;
 }
 
 export interface GameState {

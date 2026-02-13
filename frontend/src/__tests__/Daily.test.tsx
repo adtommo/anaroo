@@ -36,6 +36,15 @@ vi.mock('../services/api', () => ({
   },
 }));
 
+vi.mock('../hooks/useSound', () => ({
+  useSound: () => ({
+    playCorrect: vi.fn(),
+    playIncorrect: vi.fn(),
+    playSkip: vi.fn(),
+    playGameOver: vi.fn(),
+  }),
+}));
+
 vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { _id: 'user-1', nickname: 'TestPlayer', createdAt: new Date() },
