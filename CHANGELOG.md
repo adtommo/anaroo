@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.6](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.5...anaroo-v0.1.6) (2026-02-13)
+
+
+### Features
+
+* add sound, update look of profile and leaderboard, allow skippi… ([f5424fc](https://github.com/adtommo/anaroo/commit/f5424fc967659685cf9f7a0bbb14397eb39df231))
+* add sound, update look of profile and leaderboard, allow skipping of words ([310359b](https://github.com/adtommo/anaroo/commit/310359b935fd57583767e5883f3d3a8344cd02e5))
+
+
+### Bug Fixes
+
+* capitalise d for config name daily ([f704542](https://github.com/adtommo/anaroo/commit/f704542ae429d873d0723ed356608b4de6d541a6))
+
 ## [0.1.5](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.4...anaroo-v0.1.5) (2026-02-12)
 
 
