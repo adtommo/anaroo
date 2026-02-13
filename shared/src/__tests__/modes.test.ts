@@ -58,7 +58,7 @@ describe('getModeDuration', () => {
 describe('getModeConfig', () => {
   it('returns config object for each mode', () => {
     const config = getModeConfig(GameMode.DAILY);
-    expect(config.name).toBe('daily');
+    expect(config.name).toBe('Daily');
     expect(config).toHaveProperty('description');
     expect(config).toHaveProperty('hintsEnabled');
   });
