@@ -34,6 +34,15 @@ vi.mock('../services/api', () => {
   };
 });
 
+vi.mock('../hooks/useSound', () => ({
+  useSound: () => ({
+    playCorrect: vi.fn(),
+    playIncorrect: vi.fn(),
+    playSkip: vi.fn(),
+    playGameOver: vi.fn(),
+  }),
+}));
+
 vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { _id: 'user-1', nickname: 'TestPlayer', createdAt: new Date() },
@@ -271,6 +280,21 @@ describe('InfiniteSurvival - Edge Cases', () => {
 
     expect(screen.getByText(/Backspace/)).toBeDisabled();
     expect(screen.getByText('Clear')).toBeDisabled();
+  });
+
+  it('skip button shows cooldown after skipping', async () => {
+    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    await waitForGameReady();
+
+    const skipBtn = screen.getByText('Skip (-10s)');
+    expect(skipBtn).not.toBeDisabled();
+
+    await userEvent.click(skipBtn);
+
+    await waitFor(() => {
+      const btn = screen.getByText(/Skip \(-10s\) \d/);
+      expect(btn).toBeDisabled();
+    });
   });
 
   it('wrong guess skips to next word and tiles reset', async () => {

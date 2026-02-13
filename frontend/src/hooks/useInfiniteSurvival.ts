@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   GameState,
   GameMode,
@@ -6,6 +6,8 @@ import {
   calculateSurvivalTimeLimit,
   SURVIVAL_CONFIG,
 } from '@anaroo/shared';
+
+const SKIP_COOLDOWN_MS = 3000;
 import { apiService } from '../services/api';
 
 const BATCH_SIZE = 10;
@@ -23,6 +25,13 @@ export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurviva
   const [loading, setLoading] = useState(true);
   // Track words that were skipped due to wrong answers or timeout
   const [skippedWords, setSkippedWords] = useState<string[]>([]);
+
+  // Skip cooldown
+  const lastSkipTimeRef = useRef<number>(0);
+  const [skipCooldownRemaining, setSkipCooldownRemaining] = useState(0);
+
+  // Guard against concurrent word fetches
+  const isFetchingRef = useRef(false);
 
   // Letter input
   const [selectedIndexes, setSelectedIndexes] = useState<number[]>([]);
@@ -78,11 +87,13 @@ export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurviva
   /** Fetch more words when running low */
   useEffect(() => {
     if (!gameState || !isGameActive || gameState.endTime) return;
+    if (isFetchingRef.current) return;
 
     const remaining = gameState.words.length - gameState.currentWordIndex;
     if (remaining > 3) return;
 
     let cancelled = false;
+    isFetchingRef.current = true;
 
     async function loadMore() {
       try {
@@ -99,6 +110,8 @@ export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurviva
         setAnswers(prev => [...prev, ...results.map(r => r.answers[0])]);
       } catch (err) {
         console.error('Failed to fetch more words:', err);
+      } finally {
+        isFetchingRef.current = false;
       }
     }
 
@@ -138,6 +151,22 @@ export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurviva
     return () => clearInterval(interval);
   }, [gameState, isGameActive]);
 
+  /* Skip cooldown ticker */
+  useEffect(() => {
+    if (!isGameActive) return;
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - lastSkipTimeRef.current;
+      if (elapsed >= SKIP_COOLDOWN_MS) {
+        setSkipCooldownRemaining(0);
+      } else {
+        setSkipCooldownRemaining(Math.ceil((SKIP_COOLDOWN_MS - elapsed) / 100) / 10);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isGameActive]);
+
   const startGame = useCallback(() => {
     if (!gameState) return;
 
@@ -157,6 +186,35 @@ export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurviva
     }));
     setIsGameActive(false);
   }, []);
+
+  const skipWord = useCallback(() => {
+    if (!gameState || !isGameActive || gameState.endTime) return;
+    if (Date.now() - lastSkipTimeRef.current < SKIP_COOLDOWN_MS) return;
+
+    const newTimeRemaining = wordTimeRemaining - SURVIVAL_CONFIG.wrongAnswerPenalty;
+
+    if (newTimeRemaining <= 0) {
+      endGame();
+      return;
+    }
+
+    lastSkipTimeRef.current = Date.now();
+    setSkipCooldownRemaining(SKIP_COOLDOWN_MS / 1000);
+    setSkippedWords(prev => [...prev, currentAnswer]);
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        currentWordIndex: prev.currentWordIndex + 1,
+        comboStreak: 0,
+        wordStartTime: Date.now(),
+        currentWordTimeLimit: newTimeRemaining,
+      };
+    });
+    setWordTimeRemaining(newTimeRemaining);
+    setSelectedIndexes([]);
+    setCurrentGuess('');
+  }, [gameState, isGameActive, wordTimeRemaining, currentAnswer, endGame]);
 
   /* Letter selection */
   const selectLetter = useCallback(
@@ -191,12 +249,15 @@ export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurviva
       // Correct answer
       setLastResult('correct');
       setTimeout(() => setLastResult(null), 600);
+
+      const newStreak = gameState.survivalStreak + 1;
+      const maxTime = calculateSurvivalTimeLimit(newStreak);
+      const newTimeLimit = Math.min(wordTimeRemaining + SURVIVAL_CONFIG.correctAnswerBonus, maxTime);
+
       setGameState(prev => {
         if (!prev) return prev;
 
-        const newStreak = prev.survivalStreak + 1;
         const newCombo = prev.comboStreak + 1;
-        const newTimeLimit = calculateSurvivalTimeLimit(newStreak);
         const newDifficultyLevel = Math.floor(newStreak / SURVIVAL_CONFIG.difficultyIncreaseInterval);
 
         return {
@@ -213,29 +274,22 @@ export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurviva
         };
       });
 
-      setWordTimeRemaining(calculateSurvivalTimeLimit(gameState.survivalStreak + 1));
+      setWordTimeRemaining(newTimeLimit);
     } else {
-      // Wrong answer - deduct time and skip to next word
+      // Wrong answer - stay on current word, deduct time, reset combo
       setLastResult('incorrect');
       setTimeout(() => setLastResult(null), 600);
       const newTimeRemaining = wordTimeRemaining - SURVIVAL_CONFIG.wrongAnswerPenalty;
 
       if (newTimeRemaining <= 0) {
-        // Out of time - end game
         endGame();
       } else {
-        // Deduct time, skip word, reset combo
-        // Important: Update wordStartTime and currentWordTimeLimit so the timer
-        // continues from the new reduced time instead of recalculating
-        setSkippedWords(prev => [...prev, currentAnswer]);
         setGameState(prev => {
           if (!prev) return prev;
           return {
             ...prev,
-            currentWordIndex: prev.currentWordIndex + 1,
             comboStreak: 0,
             incorrectChars: prev.incorrectChars + currentAnswer.length,
-            // Reset timer with the reduced time as the new limit
             wordStartTime: Date.now(),
             currentWordTimeLimit: newTimeRemaining,
           };
@@ -286,8 +340,10 @@ export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurviva
     clearGuess,
     startGame,
     endGame,
+    skipWord,
     resetGame,
     loading,
     skippedWords,
+    skipCooldownRemaining,
   };
 }

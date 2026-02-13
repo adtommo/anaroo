@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SubmitScoreResponse } from '@anaroo/shared';
 import { useInfiniteSurvival } from '../hooks/useInfiniteSurvival';
 import { useAuth } from '../contexts/AuthContext';
+import { useSound } from '../hooks/useSound';
 import { apiService } from '../services/api';
 import { AuthModal } from './AuthModal';
 import { AdUnit } from './AdUnit';
@@ -26,17 +27,34 @@ export function InfiniteSurvival({ language, difficulty }: InfiniteSurvivalProps
     removeLastLetter,
     clearGuess,
     startGame,
+    skipWord,
     resetGame,
     loading,
     skippedWords,
+    skipCooldownRemaining,
   } = useInfiniteSurvival({ language, difficulty });
 
+  const { playCorrect, playIncorrect, playSkip, playGameOver } = useSound();
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SubmitScoreResponse | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  /** 🚀 START GAME IMMEDIATELY once loaded */
+  /** Sound effects */
+  const prevLastResult = useRef(lastResult);
+  useEffect(() => {
+    if (lastResult && lastResult !== prevLastResult.current) {
+      if (lastResult === 'correct') playCorrect();
+      else playIncorrect();
+    }
+    prevLastResult.current = lastResult;
+  }, [lastResult, playCorrect, playIncorrect]);
+
+  useEffect(() => {
+    if (gameState?.endTime) playGameOver();
+  }, [gameState?.endTime, playGameOver]);
+
+  /** START GAME IMMEDIATELY once loaded */
   useEffect(() => {
     if (!loading && gameState && !isGameActive && !gameState.startTime) {
       startGame();
@@ -288,6 +306,13 @@ export function InfiniteSurvival({ language, difficulty }: InfiniteSurvivalProps
           disabled={currentGuess.length === 0}
         >
           Clear
+        </button>
+        <button
+          className="control-button"
+          onClick={() => { skipWord(); playSkip(); }}
+          disabled={skipCooldownRemaining > 0}
+        >
+          {skipCooldownRemaining > 0 ? `Skip (-10s) ${skipCooldownRemaining.toFixed(1)}s` : 'Skip (-10s)'}
         </button>
       </div>
     </div>

@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { DailyChallenge, SubmitScoreResponse } from '@anaroo/shared';
 import { useDaily } from '../hooks/useDaily';
 import { useAuth } from '../contexts/AuthContext';
+import { useSound } from '../hooks/useSound';
 import { apiService } from '../services/api';
 import { AuthModal } from './AuthModal';
 import { AdUnit } from './AdUnit';
 
 export function Daily() {
   const { user, loading: authLoading } = useAuth();
+  const { playCorrect } = useSound();
   const [challenge, setChallenge] = useState<DailyChallenge | null>(null);
   const [completed, setCompleted] = useState(false);
   const [previousTime, setPreviousTime] = useState<number | null>(null);
@@ -85,6 +87,11 @@ export function Daily() {
 
     return () => clearInterval(interval);
   }, [isGameActive, gameState.startTime, gameState.endTime]);
+
+  /** Sound on solve */
+  useEffect(() => {
+    if (gameState.endTime) playCorrect();
+  }, [gameState.endTime, playCorrect]);
 
   /** Submit score on end */
   useEffect(() => {

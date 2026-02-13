@@ -260,8 +260,10 @@ router.get('/leaderboard/daily', async (req: Request, res: Response): Promise<vo
   try {
     const mode = parseGameMode(req.query.mode) || GameMode.TIMED;
     const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 50, 100));
+    const rawDuration = parseInt(req.query.timedDuration as string);
+    const timedDuration = VALID_TIMED_DURATIONS.includes(rawDuration) ? rawDuration as TimedDuration : undefined;
 
-    const leaderboard = await leaderboardService.getDailyLeaderboard(mode, limit);
+    const leaderboard = await leaderboardService.getDailyLeaderboard(mode, limit, timedDuration);
     res.json(leaderboard);
   } catch (error) {
     console.error('Daily leaderboard error:', error);
@@ -277,8 +279,10 @@ router.get('/leaderboard/global', async (req: Request, res: Response): Promise<v
   try {
     const mode = parseGameMode(req.query.mode) || GameMode.TIMED;
     const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 50, 100));
+    const rawDuration = parseInt(req.query.timedDuration as string);
+    const timedDuration = VALID_TIMED_DURATIONS.includes(rawDuration) ? rawDuration as TimedDuration : undefined;
 
-    const leaderboard = await leaderboardService.getGlobalLeaderboard(mode, limit);
+    const leaderboard = await leaderboardService.getGlobalLeaderboard(mode, limit, timedDuration);
     res.json(leaderboard);
   } catch (error) {
     console.error('Global leaderboard error:', error);
@@ -453,11 +457,11 @@ router.delete('/word/recent', requireAuth, async (req: AuthRequest, res: Respons
 
 /**
  * GET /api/profile
- * Get current user's profile with stats
+ * Get current user's enriched profile with stats, recent runs, and rankings
  */
 router.get('/profile', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const profile = await profileService.getProfile(req.userId!);
+    const profile = await profileService.getEnrichedProfile(req.userId!);
     if (!profile) {
       res.status(404).json({ error: 'Profile not found' });
       return;
@@ -471,12 +475,17 @@ router.get('/profile', requireAuth, async (req: AuthRequest, res: Response): Pro
 
 /**
  * GET /api/profile/user/:nickname
- * Get public profile by nickname (for viewing other players)
+ * Get public enriched profile by nickname (for viewing other players)
  */
 router.get('/profile/user/:nickname', async (req: Request, res: Response): Promise<void> => {
   try {
     const { nickname } = req.params;
-    const profile = await profileService.getProfileByNickname(nickname as string);
+    const user = await UserModel.findOne({ nickname: nickname as string }).lean();
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    const profile = await profileService.getEnrichedProfile(user._id.toString());
     if (!profile) {
       res.status(404).json({ error: 'User not found' });
       return;

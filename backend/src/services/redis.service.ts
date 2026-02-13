@@ -1,5 +1,5 @@
 import { createClient, RedisClientType } from 'redis';
-import { GameMode } from '@anaroo/shared';
+import { GameMode, TimedDuration } from '@anaroo/shared';
 
 class RedisService {
   private client: RedisClientType | null = null;
@@ -37,29 +37,38 @@ class RedisService {
     }
   }
 
-  private getGlobalKey(mode: GameMode): string {
+  private getGlobalKey(mode: GameMode, timedDuration?: TimedDuration): string {
+    if (mode === GameMode.TIMED && timedDuration) {
+      return `leaderboard:global:${mode}:${timedDuration}`;
+    }
     return `leaderboard:global:${mode}`;
   }
 
-  private getDailyKey(mode: GameMode): string {
+  private getDailyKey(mode: GameMode, timedDuration?: TimedDuration): string {
     const date = new Date().toISOString().split('T')[0];
+    if (mode === GameMode.TIMED && timedDuration) {
+      return `leaderboard:daily:${mode}:${timedDuration}:${date}`;
+    }
     return `leaderboard:daily:${mode}:${date}`;
   }
 
   /**
-   * Add a score to both global and daily leaderboards
+   * Add a score to both global and daily leaderboards.
+   * For daily mode, score should be negative timeElapsed (so fastest = highest via ZREVRANK).
+   * For timed mode, timedDuration splits into separate leaderboards.
    */
   async addScore(
     userId: string,
     mode: GameMode,
-    score: number
+    score: number,
+    timedDuration?: TimedDuration
   ): Promise<{ globalRank: number; dailyRank: number }> {
     if (!this.client || !this.isConnected) {
       throw new Error('Redis client not connected');
     }
 
-    const globalKey = this.getGlobalKey(mode);
-    const dailyKey = this.getDailyKey(mode);
+    const globalKey = this.getGlobalKey(mode, timedDuration);
+    const dailyKey = this.getDailyKey(mode, timedDuration);
 
     // Add to both leaderboards (higher score = better)
     await Promise.all([
@@ -85,12 +94,12 @@ class RedisService {
   /**
    * Get top N scores from global leaderboard
    */
-  async getGlobalLeaderboard(mode: GameMode, limit: number = 50): Promise<Array<{ userId: string; score: number }>> {
+  async getGlobalLeaderboard(mode: GameMode, limit: number = 50, timedDuration?: TimedDuration): Promise<Array<{ userId: string; score: number }>> {
     if (!this.client || !this.isConnected) {
       throw new Error('Redis client not connected');
     }
 
-    const key = this.getGlobalKey(mode);
+    const key = this.getGlobalKey(mode, timedDuration);
     const results = await this.client.zRangeWithScores(key, 0, limit - 1, { REV: true });
 
     return results.map((result) => ({
@@ -102,12 +111,12 @@ class RedisService {
   /**
    * Get top N scores from daily leaderboard
    */
-  async getDailyLeaderboard(mode: GameMode, limit: number = 50): Promise<Array<{ userId: string; score: number }>> {
+  async getDailyLeaderboard(mode: GameMode, limit: number = 50, timedDuration?: TimedDuration): Promise<Array<{ userId: string; score: number }>> {
     if (!this.client || !this.isConnected) {
       throw new Error('Redis client not connected');
     }
 
-    const key = this.getDailyKey(mode);
+    const key = this.getDailyKey(mode, timedDuration);
     const results = await this.client.zRangeWithScores(key, 0, limit - 1, { REV: true });
 
     return results.map((result) => ({
@@ -121,14 +130,15 @@ class RedisService {
    */
   async getUserRank(
     userId: string,
-    mode: GameMode
+    mode: GameMode,
+    timedDuration?: TimedDuration
   ): Promise<{ globalRank: number; globalScore: number; dailyRank: number; dailyScore: number } | null> {
     if (!this.client || !this.isConnected) {
       throw new Error('Redis client not connected');
     }
 
-    const globalKey = this.getGlobalKey(mode);
-    const dailyKey = this.getDailyKey(mode);
+    const globalKey = this.getGlobalKey(mode, timedDuration);
+    const dailyKey = this.getDailyKey(mode, timedDuration);
 
     const [globalRank, globalScore, dailyRank, dailyScore] = await Promise.all([
       this.client.zRevRank(globalKey, userId),
@@ -147,6 +157,21 @@ class RedisService {
       dailyRank: (dailyRank ?? -1) + 1,
       dailyScore: dailyScore ?? 0,
     };
+  }
+
+  /**
+   * Get total number of players in a leaderboard
+   */
+  async getLeaderboardSize(mode: GameMode, type: 'global' | 'daily', timedDuration?: TimedDuration): Promise<number> {
+    if (!this.client || !this.isConnected) {
+      throw new Error('Redis client not connected');
+    }
+
+    const key = type === 'global'
+      ? this.getGlobalKey(mode, timedDuration)
+      : this.getDailyKey(mode, timedDuration);
+
+    return this.client.zCard(key);
   }
 
   /**
