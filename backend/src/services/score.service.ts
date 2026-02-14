@@ -29,15 +29,19 @@ export class ScoreService {
       throw new Error('Invalid userId');
     }
 
+    // Sanitize to plain primitives to prevent NoSQL operator injection
+    const userId = String(request.userId);
+    const mode = String(request.mode) as GameMode;
+
     // Prevent duplicate daily submissions
-    if (request.mode === GameMode.DAILY) {
+    if (mode === GameMode.DAILY) {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       const todayEnd = new Date();
       todayEnd.setHours(23, 59, 59, 999);
 
       const existingRun = await RunModel.findOne({
-        userId: { $eq: request.userId },
+        userId: { $eq: userId },
         mode: { $eq: GameMode.DAILY },
         createdAt: { $gte: todayStart, $lte: todayEnd },
       }).lean();
@@ -58,7 +62,7 @@ export class ScoreService {
       request.correctChars,
       request.incorrectChars,
       request.timeElapsed,
-      request.mode,
+      mode,
       0
     );
 
@@ -68,8 +72,8 @@ export class ScoreService {
 
     // Create run record
     const run: Omit<Run, '_id'> = {
-      userId: request.userId,
-      mode: request.mode,
+      userId,
+      mode,
       score: scoreCalc.score,
       accuracy: scoreCalc.accuracy,
       wpm: scoreCalc.wpm,
@@ -91,20 +95,20 @@ export class ScoreService {
     // Check if it's a personal best
     let isPersonalBest = false;
     const existingBest = await BestScoreModel.findOne({
-      userId: { $eq: request.userId },
-      mode: { $eq: request.mode },
+      userId: { $eq: userId },
+      mode: { $eq: mode },
     });
 
     if (!existingBest || scoreCalc.score > existingBest.score) {
       isPersonalBest = true;
       await BestScoreModel.findOneAndUpdate(
         {
-          userId: { $eq: request.userId },
-          mode: { $eq: request.mode },
+          userId: { $eq: userId },
+          mode: { $eq: mode },
         },
         {
-          userId: request.userId,
-          mode: request.mode,
+          userId,
+          mode,
           score: scoreCalc.score,
           accuracy: scoreCalc.accuracy,
           wpm: scoreCalc.wpm,
@@ -117,13 +121,13 @@ export class ScoreService {
     // Update leaderboards
     // For daily mode, store negative timeElapsed so fastest time sorts highest via ZREVRANK
     // For timed mode, split by duration
-    const leaderboardScore = request.mode === GameMode.DAILY
+    const leaderboardScore = mode === GameMode.DAILY
       ? -request.timeElapsed
       : scoreCalc.score;
 
     const ranks = await redisService.addScore(
-      request.userId,
-      request.mode,
+      userId,
+      mode,
       leaderboardScore,
       request.timedDuration
     );
