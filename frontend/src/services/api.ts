@@ -3,11 +3,13 @@ import {
   SubmitScoreResponse,
   LeaderboardEntry,
   GameMode,
+  TimedDuration,
   Run,
   BestScore,
   PersonalStats,
   User,
   UserProfile,
+  EnrichedUserProfile,
   DailyChallenge,
   AvatarId,
   ThemeId,
@@ -92,20 +94,22 @@ class ApiService {
   // Leaderboard endpoints
   async getDailyLeaderboard(
     mode: GameMode,
-    limit: number = 50
+    limit: number = 50,
+    timedDuration?: TimedDuration
   ): Promise<LeaderboardEntry[]> {
-    return this.request<LeaderboardEntry[]>(
-      `/leaderboard/daily?mode=${mode}&limit=${limit}`
-    );
+    const params = new URLSearchParams({ mode, limit: limit.toString() });
+    if (timedDuration !== undefined) params.append('timedDuration', timedDuration.toString());
+    return this.request<LeaderboardEntry[]>(`/leaderboard/daily?${params}`);
   }
 
   async getGlobalLeaderboard(
     mode: GameMode,
-    limit: number = 50
+    limit: number = 50,
+    timedDuration?: TimedDuration
   ): Promise<LeaderboardEntry[]> {
-    return this.request<LeaderboardEntry[]>(
-      `/leaderboard/global?mode=${mode}&limit=${limit}`
-    );
+    const params = new URLSearchParams({ mode, limit: limit.toString() });
+    if (timedDuration !== undefined) params.append('timedDuration', timedDuration.toString());
+    return this.request<LeaderboardEntry[]>(`/leaderboard/global?${params}`);
   }
 
   async getUserRank(userId: string, mode: GameMode) {
@@ -151,12 +155,12 @@ class ApiService {
   }
 
   // Profile endpoints
-  async getProfile(): Promise<UserProfile> {
-    return this.request<UserProfile>('/profile');
+  async getProfile(): Promise<EnrichedUserProfile> {
+    return this.request<EnrichedUserProfile>('/profile');
   }
 
-  async getPublicProfile(nickname: string): Promise<UserProfile> {
-    return this.request<UserProfile>(`/profile/user/${encodeURIComponent(nickname)}`);
+  async getPublicProfile(nickname: string): Promise<EnrichedUserProfile> {
+    return this.request<EnrichedUserProfile>(`/profile/user/${encodeURIComponent(nickname)}`);
   }
 
   async updateProfile(updates: {

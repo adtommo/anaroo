@@ -80,6 +80,9 @@ export class ScoreService {
       seed: request.seed,
       comboStreak: 0,
       createdAt: new Date(),
+      timedDuration: request.timedDuration,
+      wordsCompleted: request.wordsCompleted,
+      survivalStreak: request.survivalStreak,
     };
 
     // Save to database
@@ -112,10 +115,17 @@ export class ScoreService {
     }
 
     // Update leaderboards
+    // For daily mode, store negative timeElapsed so fastest time sorts highest via ZREVRANK
+    // For timed mode, split by duration
+    const leaderboardScore = request.mode === GameMode.DAILY
+      ? -request.timeElapsed
+      : scoreCalc.score;
+
     const ranks = await redisService.addScore(
       request.userId,
       request.mode,
-      scoreCalc.score
+      leaderboardScore,
+      request.timedDuration
     );
 
     return {

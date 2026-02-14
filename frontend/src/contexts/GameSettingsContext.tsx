@@ -6,12 +6,14 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 export interface GameSettings {
   language: Language;
   difficulty: Difficulty;
+  soundEnabled: boolean;
 }
 
 interface GameSettingsContextType {
   settings: GameSettings;
   setLanguage: (lang: Language) => void;
   setDifficulty: (diff: Difficulty) => void;
+  setSoundEnabled: (enabled: boolean) => void;
 }
 
 const STORAGE_KEY = 'anaroo_game_settings';
@@ -39,6 +41,7 @@ function loadSettings(): GameSettings {
       return {
         language: SUPPORTED_LANGUAGES.includes(parsed.language) ? parsed.language : detectBrowserLanguage(),
         difficulty: ['easy', 'medium', 'hard'].includes(parsed.difficulty) ? parsed.difficulty : 'easy',
+        soundEnabled: parsed.soundEnabled !== false,
       };
     }
   } catch {
@@ -48,6 +51,7 @@ function loadSettings(): GameSettings {
   return {
     language: detectBrowserLanguage(),
     difficulty: 'easy',
+    soundEnabled: true,
   };
 }
 
@@ -77,8 +81,12 @@ export function GameSettingsProvider({ children }: { children: ReactNode }) {
     setSettings(prev => ({ ...prev, difficulty }));
   };
 
+  const setSoundEnabled = (soundEnabled: boolean) => {
+    setSettings(prev => ({ ...prev, soundEnabled }));
+  };
+
   return (
-    <GameSettingsContext.Provider value={{ settings, setLanguage, setDifficulty }}>
+    <GameSettingsContext.Provider value={{ settings, setLanguage, setDifficulty, setSoundEnabled }}>
       {children}
     </GameSettingsContext.Provider>
   );

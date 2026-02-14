@@ -11,21 +11,21 @@ export interface ModeConfig {
 
 export const GAME_MODES: Record<GameMode, ModeConfig> = {
   [GameMode.DAILY]: {
-    name: 'daily',
+    name: 'Daily',
     description: 'one word per day, compete globally',
     hintsEnabled: true,
     revealDelaySeconds: 10,
     revealPenaltySeconds: 6,
   },
   [GameMode.TIMED]: {
-    name: 'timed',
+    name: 'Timed',
     description: 'solve as many words as you can before time runs out',
     hintsEnabled: false,
     revealDelaySeconds: 5,
     revealPenaltySeconds: 3,
   },
   [GameMode.INFINITE_SURVIVAL]: {
-    name: 'survival',
+    name: 'Survival',
     description: 'endless words with increasing difficulty',
     hintsEnabled: true,
     revealDelaySeconds: 5,
@@ -53,6 +53,8 @@ export const TIMED_DURATIONS: Record<TimedDuration, TimedModeConfig> = {
   },
 };
 
+export const SKIP_COOLDOWN_MS = 3000;
+
 // Infinite Survival Mode configuration
 export const SURVIVAL_CONFIG = {
   initialTimePerWord: 120, // 2 minutes for first word
@@ -60,6 +62,7 @@ export const SURVIVAL_CONFIG = {
   difficultyIncreaseInterval: 3, // Increase difficulty every 3 words
   timeReductionPerLevel: 10, // Reduce time by 10 seconds per difficulty level
   wrongAnswerPenalty: 10, // Deduct 10 seconds for wrong answer
+  correctAnswerBonus: 15, // Add 15 seconds on correct answer (capped at max)
 };
 
 export const getModeDuration = (mode: GameMode, timedDuration?: TimedDuration): number | undefined => {

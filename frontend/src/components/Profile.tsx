@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  UserProfile,
+  EnrichedUserProfile,
   THEMES,
   ThemeId,
+  GameMode,
   getLevelProgress,
   getXpForLevel,
 } from '@anaroo/shared';
@@ -16,30 +17,31 @@ interface ProfileProps {
   onLogout: () => void;
 }
 
+const MODE_LABELS: Record<string, string> = {
+  daily: 'Daily',
+  timed: 'Timed',
+  infinite_survival: 'Survival',
+};
+
 export function Profile({ onBack, onLogout }: ProfileProps) {
   const { updateUser } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<EnrichedUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Edit states
   const [editingNickname, setEditingNickname] = useState(false);
   const [newNickname, setNewNickname] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
 
-  // Image upload
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  useEffect(() => { loadProfile(); }, []);
 
   const loadProfile = async () => {
     try {
@@ -58,31 +60,22 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
   const handleUpdateTheme = async (themeId: ThemeId) => {
     setTheme(themeId);
     if (!profile) return;
-    try {
-      await apiService.updateProfile({ theme: themeId });
-    } catch {
-      // Theme is saved locally anyway
-    }
+    try { await apiService.updateProfile({ theme: themeId }); } catch { /* saved locally */ }
   };
 
   const handleSaveNickname = async () => {
-    if (!profile || newNickname.trim() === profile.nickname) {
-      setEditingNickname(false);
-      return;
-    }
+    if (!profile || newNickname.trim() === profile.nickname) { setEditingNickname(false); return; }
     setSaving(true);
     setSaveError(null);
     try {
       const trimmedNickname = newNickname.trim();
       const updated = await apiService.updateProfile({ nickname: trimmedNickname });
-      setProfile(updated);
+      setProfile((prev) => prev ? { ...prev, ...updated } : null);
       updateUser({ nickname: trimmedNickname });
       setEditingNickname(false);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to update nickname');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const handleDeleteAccount = async () => {
@@ -101,46 +94,24 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setSaveError('Please select an image file');
-      return;
-    }
-
-    // Validate file size (2MB max)
-    if (file.size > 2 * 1024 * 1024) {
-      setSaveError('Image must be less than 2MB');
-      return;
-    }
-
+    if (!file.type.startsWith('image/')) { setSaveError('Please select an image file'); return; }
+    if (file.size > 2 * 1024 * 1024) { setSaveError('Image must be less than 2MB'); return; }
     setSaving(true);
     setSaveError(null);
-
     try {
-      // Convert to base64
       const reader = new FileReader();
       reader.onload = async () => {
         try {
           const base64 = reader.result as string;
           const updated = await apiService.updateProfile({ profileImage: base64 });
-          setProfile(updated);
+          setProfile((prev) => prev ? { ...prev, ...updated } : null);
           updateUser({ profileImage: base64 });
-        } catch (err) {
-          setSaveError(err instanceof Error ? err.message : 'Failed to upload image');
-        } finally {
-          setSaving(false);
-        }
+        } catch (err) { setSaveError(err instanceof Error ? err.message : 'Failed to upload image'); }
+        finally { setSaving(false); }
       };
-      reader.onerror = () => {
-        setSaveError('Failed to read image file');
-        setSaving(false);
-      };
+      reader.onerror = () => { setSaveError('Failed to read image file'); setSaving(false); };
       reader.readAsDataURL(file);
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to upload image');
-      setSaving(false);
-    }
+    } catch (err) { setSaveError(err instanceof Error ? err.message : 'Failed to upload image'); setSaving(false); }
   };
 
   const handleRemoveImage = async () => {
@@ -148,18 +119,13 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
     setSaveError(null);
     try {
       const updated = await apiService.updateProfile({ profileImage: null });
-      setProfile(updated);
+      setProfile((prev) => prev ? { ...prev, ...updated } : null);
       updateUser({ profileImage: undefined });
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to remove image');
-    } finally {
-      setSaving(false);
-    }
+    } catch (err) { setSaveError(err instanceof Error ? err.message : 'Failed to remove image'); }
+    finally { setSaving(false); }
   };
 
-  if (loading) {
-    return <div className="loading">Loading profile...</div>;
-  }
+  if (loading) return <div className="loading">Loading profile...</div>;
 
   if (error || !profile) {
     return (
@@ -176,157 +142,174 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
   const xpIntoLevel = profile.xp - currentLevelXp;
   const xpNeeded = nextLevelXp - currentLevelXp;
 
-  const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const formatDate = (date: Date | string) =>
+    new Date(date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const formatShortDate = (date: Date | string) =>
+    new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+  const formatTime = (seconds: number): string => {
+    if (seconds < 60) return `${seconds.toFixed(1)}s`;
+    const m = Math.floor(seconds / 60);
+    const s = (seconds % 60).toFixed(1);
+    return `${m}m ${s}s`;
   };
 
+  const rankingEntries = [
+    { label: 'Daily', data: profile.rankings.daily },
+    { label: 'Timed 30s', data: profile.rankings.timed30 },
+    { label: 'Timed 60s', data: profile.rankings.timed60 },
+    { label: 'Timed 120s', data: profile.rankings.timed120 },
+    { label: 'Survival', data: profile.rankings.survival },
+  ].filter((r) => r.data);
+
   return (
-    <div className="profile-page">
+    <div className="pf">
       <div className="profile-header-bar">
         <button onClick={onBack} className="btn-back">← Back</button>
         <h2>Profile</h2>
         <div />
       </div>
 
-      {/* Profile Card */}
-      <div className="profile-card">
-        <div className="profile-avatar-container">
-          <ProfileAvatar
-            profileImage={profile.profileImage}
-            nickname={profile.nickname}
-            size="large"
-          />
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            accept="image/*"
-            className="sr-only"
-          />
-          <div className="avatar-actions">
-            <button
-              className="btn-small"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={saving}
-            >
-              {profile.profileImage ? 'Change' : 'Upload'}
-            </button>
-            {profile.profileImage && (
-              <button
-                className="btn-small btn-secondary"
-                onClick={handleRemoveImage}
-                disabled={saving}
-              >
-                Remove
+      {/* ── Details Card ── */}
+      <div className="pf-details">
+        <div className="pf-identity">
+          <div className="pf-avatar-wrap">
+            <ProfileAvatar profileImage={profile.profileImage} nickname={profile.nickname} size="large" />
+            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="sr-only" />
+            <div className="pf-avatar-actions">
+              <button className="pf-avatar-btn" onClick={() => fileInputRef.current?.click()} disabled={saving}>
+                {profile.profileImage ? 'Change' : 'Upload'}
+              </button>
+              {profile.profileImage && (
+                <button className="pf-avatar-btn" onClick={handleRemoveImage} disabled={saving}>Remove</button>
+              )}
+            </div>
+          </div>
+          <div className="pf-name-area">
+            {editingNickname ? (
+              <div className="nickname-edit">
+                <input type="text" value={newNickname} onChange={(e) => setNewNickname(e.target.value)} maxLength={20} className="nickname-input" />
+                <button onClick={handleSaveNickname} disabled={saving} className="btn-small">Save</button>
+                <button onClick={() => { setEditingNickname(false); setNewNickname(profile.nickname); }} className="btn-small">Cancel</button>
+              </div>
+            ) : (
+              <button className="pf-nickname" onClick={() => setEditingNickname(true)}>
+                {profile.nickname}
+                <span className="pf-edit-hint">✏</span>
               </button>
             )}
+            <span className="pf-joined">Joined {formatDate(profile.createdAt)}</span>
+            <div className="pf-xp-row">
+              <span className="pf-level-badge">Lvl {profile.level}</span>
+              <div className="pf-xp-track"><div className="pf-xp-fill" style={{ width: `${levelProgress * 100}%` }} /></div>
+              <span className="pf-xp-label">{xpIntoLevel} / {xpNeeded} xp</span>
+            </div>
           </div>
         </div>
 
-        <div className="profile-info">
-          {editingNickname ? (
-            <div className="nickname-edit">
-              <input
-                type="text"
-                value={newNickname}
-                onChange={(e) => setNewNickname(e.target.value)}
-                maxLength={20}
-                className="nickname-input"
-              />
-              <button onClick={handleSaveNickname} disabled={saving} className="btn-small">
-                Save
-              </button>
-              <button onClick={() => { setEditingNickname(false); setNewNickname(profile.nickname); }} className="btn-small">
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <h1 className="profile-nickname" onClick={() => setEditingNickname(true)}>
-              {profile.nickname}
-              <span className="edit-icon">✏️</span>
-            </h1>
-          )}
-          <p className="profile-joined">Joined {formatDate(profile.createdAt)}</p>
+        <div className="pf-sep" />
+
+        <div className="pf-typing-stats">
+          <div className="pf-stat-block">
+            <span className="pf-stat-title">games played</span>
+            <span className="pf-stat-big">{profile.gamesPlayed}</span>
+          </div>
+          <div className="pf-stat-block">
+            <span className="pf-stat-title">words solved</span>
+            <span className="pf-stat-big">{profile.stats?.globalStats?.wordsSolved || 0}</span>
+          </div>
+          <div className="pf-stat-block">
+            <span className="pf-stat-title">daily streak</span>
+            <span className="pf-stat-big">{profile.dailyStreak}</span>
+          </div>
         </div>
       </div>
 
       {saveError && <div className="save-error">{saveError}</div>}
 
-      {/* Level & XP */}
-      <div className="profile-section">
-        <h3>Level & XP</h3>
-        <div className="level-display">
-          <div className="level-badge">Level {profile.level}</div>
-          <div className="xp-bar-container">
-            <div className="xp-bar" style={{ width: `${levelProgress * 100}%` }} />
+      {/* ── Leaderboard Rankings ── */}
+      {rankingEntries.length > 0 && (
+        <div className="pf-card">
+          <div className="pf-ranks">
+            {rankingEntries.map(({ label, data }) => (
+              <div key={label} className="pf-rank-block">
+                <span className="pf-rank-label">{label}</span>
+                <span className="pf-rank-num">#{data!.rank.toLocaleString()}</span>
+                <span className="pf-rank-total">/ {data!.totalPlayers.toLocaleString()}</span>
+              </div>
+            ))}
           </div>
-          <div className="xp-text">{xpIntoLevel} / {xpNeeded} XP</div>
         </div>
-        <p className="total-xp">Total XP: {(profile.xp || 0).toLocaleString()}</p>
-      </div>
+      )}
 
-      {/* Stats */}
-      <div className="profile-section">
-        <h3>Stats</h3>
-        <div className="stats-grid">
-          <div className="stat-card">
-            <span className="stat-value">{profile.gamesPlayed}</span>
-            <span className="stat-label">Games Played</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-value">{profile.stats?.globalStats?.wordsSolved || 0}</span>
-            <span className="stat-label">Words Solved</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-value">{profile.dailyStreak}</span>
-            <span className="stat-label">Daily Streak</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-value">
-              {profile.stats?.modeStats?.daily?.longestStreak || 0}
-            </span>
-            <span className="stat-label">Best Streak</span>
+      {/* ── Personal Bests ── */}
+      <div className="pf-bests-row">
+        <div className="pf-card pf-bests-card">
+          <h3 className="pf-card-title">daily best</h3>
+          <span className="pf-best-big">{profile.stats?.modeStats?.daily?.bestTime?.toFixed(1) || '—'}<small>s</small></span>
+          <span className="pf-best-sub">{profile.stats?.modeStats?.daily?.completions || 0} completions</span>
+        </div>
+
+        <div className="pf-card pf-bests-card">
+          <h3 className="pf-card-title">timed high scores</h3>
+          <div className="pf-best-grid">
+            {([30, 60, 120] as const).map((d) => (
+              <div key={d} className="pf-best-item">
+                <span className="pf-best-duration">{d}s</span>
+                <span className="pf-best-val">{profile.stats?.modeStats?.timed?.[d]?.highestScore || 0}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {profile.stats?.modeStats && (
-          <div className="mode-stats">
-            <h4>Daily</h4>
-            <div className="mode-stat-row">
-              <span>Best Time: {profile.stats.modeStats.daily?.bestTime?.toFixed(1) || '—'}s</span>
-              <span>Completions: {profile.stats.modeStats.daily?.completions || 0}</span>
-            </div>
-
-            <h4>Timed Mode</h4>
-            <div className="mode-stat-row">
-              <span>30s High: {profile.stats.modeStats.timed?.[30]?.highestScore || 0}</span>
-              <span>60s High: {profile.stats.modeStats.timed?.[60]?.highestScore || 0}</span>
-              <span>120s High: {profile.stats.modeStats.timed?.[120]?.highestScore || 0}</span>
-            </div>
-
-            <h4>Infinite Survival</h4>
-            <div className="mode-stat-row">
-              <span>Longest Streak: {profile.stats.modeStats.infinite_survival?.longestStreak || 0}</span>
-              <span>High Score: {profile.stats.modeStats.infinite_survival?.highestScore || 0}</span>
-            </div>
-          </div>
-        )}
+        <div className="pf-card pf-bests-card">
+          <h3 className="pf-card-title">survival</h3>
+          <span className="pf-best-big">{profile.stats?.modeStats?.infinite_survival?.highestScore || 0}</span>
+          <span className="pf-best-sub">streak: {profile.stats?.modeStats?.infinite_survival?.longestStreak || 0}</span>
+        </div>
       </div>
 
-      {/* Theme Selection */}
+      {/* ── Recent Activity ── */}
+      {profile.recentRuns.length > 0 && (
+        <div className="pf-card">
+          <h3 className="pf-card-title">recent activity</h3>
+          <table className="pf-activity-table">
+            <thead>
+              <tr>
+                <th>mode</th>
+                <th>result</th>
+                <th>wpm</th>
+                <th>acc</th>
+                <th>date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {profile.recentRuns.map((run, i) => (
+                <tr key={i} className={i % 2 === 0 ? 'pf-row-alt' : ''}>
+                  <td className="pf-act-mode">
+                    {MODE_LABELS[run.mode] || run.mode}
+                    {run.timedDuration ? ` ${run.timedDuration}s` : ''}
+                  </td>
+                  <td className="pf-act-result">
+                    {run.mode === GameMode.DAILY ? formatTime(run.timeElapsed) : run.score.toLocaleString()}
+                  </td>
+                  <td>{Math.round(run.wpm)}</td>
+                  <td>{Math.round(run.accuracy)}%</td>
+                  <td className="pf-act-date">{formatShortDate(run.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── Theme ── */}
       <div className="profile-section">
         <h3>Theme</h3>
         <div className="theme-grid">
           {THEMES.map((t) => (
-            <button
-              key={t.id}
-              className={`theme-option ${theme === t.id ? 'active' : ''}`}
-              onClick={() => handleUpdateTheme(t.id)}
-            >
+            <button key={t.id} className={`theme-option ${theme === t.id ? 'active' : ''}`} onClick={() => handleUpdateTheme(t.id)}>
               <span className="theme-name">{t.name}</span>
               <span className="theme-desc">{t.description}</span>
             </button>
@@ -334,55 +317,27 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
         </div>
       </div>
 
-      {/* Account Actions */}
+      {/* ── Account ── */}
       <div className="profile-section">
         <h3>Account</h3>
-        <button
-          className="btn-logout"
-          onClick={() => {
-            apiService.clearToken();
-            onLogout();
-          }}
-        >
-          Log Out
-        </button>
+        <button className="btn-logout" onClick={() => { apiService.clearToken(); onLogout(); }}>Log Out</button>
       </div>
 
-      {/* Danger Zone */}
+      {/* ── Danger Zone ── */}
       <div className="profile-section danger-zone">
         <h3>Danger Zone</h3>
         {!showDeleteConfirm ? (
-          <button
-            className="btn-danger"
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            Delete Account
-          </button>
+          <button className="btn-danger" onClick={() => setShowDeleteConfirm(true)}>Delete Account</button>
         ) : (
           <div className="delete-confirm">
             <p>This will permanently delete your account and all data. This action cannot be undone.</p>
             <p>Type <strong>DELETE</strong> to confirm:</p>
-            <input
-              type="text"
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              placeholder="Type DELETE"
-              className="delete-input"
-            />
+            <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder="Type DELETE" className="delete-input" />
             <div className="delete-actions">
-              <button
-                className="btn-danger"
-                onClick={handleDeleteAccount}
-                disabled={deleteConfirmText !== 'DELETE' || deleting}
-              >
+              <button className="btn-danger" onClick={handleDeleteAccount} disabled={deleteConfirmText !== 'DELETE' || deleting}>
                 {deleting ? 'Deleting...' : 'Confirm Delete'}
               </button>
-              <button
-                className="btn-secondary"
-                onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
-              >
-                Cancel
-              </button>
+              <button className="btn-secondary" onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}>Cancel</button>
             </div>
           </div>
         )}

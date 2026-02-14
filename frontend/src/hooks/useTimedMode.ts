@@ -6,6 +6,8 @@ import {
   createInitialGameState,
   TIMED_DURATIONS,
 } from '@anaroo/shared';
+
+const SKIP_COOLDOWN_MS = 3000;
 import { apiService } from '../services/api';
 
 interface UseTimedModeOptions {
@@ -37,8 +39,13 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
 
   // Track word stats (attempts per word)
   const [wordStats, setWordStats] = useState<WordStat[]>([]);
+  const [skippedWords, setSkippedWords] = useState<string[]>([]);
   const wordStartTimeRef = useRef<number>(Date.now());
   const currentAttemptsRef = useRef<number>(0);
+
+  // Skip cooldown
+  const lastSkipTimeRef = useRef<number>(0);
+  const [skipCooldownRemaining, setSkipCooldownRemaining] = useState(0);
 
   // Track settings to detect changes
   const settingsRef = useRef({ language, difficulty });
@@ -71,6 +78,7 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
         setSelectedIndexes([]);
         setCurrentGuess('');
         setWordStats([]);
+        setSkippedWords([]);
         currentAttemptsRef.current = 0;
       } catch (err) {
         console.error('Failed to initialize timed mode:', err);
@@ -117,6 +125,22 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
     return () => clearInterval(interval);
   }, [isGameActive, gameState?.startTime, gameState?.endTime, duration]);
 
+  /* Skip cooldown ticker */
+  useEffect(() => {
+    if (!isGameActive) return;
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - lastSkipTimeRef.current;
+      if (elapsed >= SKIP_COOLDOWN_MS) {
+        setSkipCooldownRemaining(0);
+      } else {
+        setSkipCooldownRemaining(Math.ceil((SKIP_COOLDOWN_MS - elapsed) / 100) / 10);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isGameActive]);
+
   const startGame = useCallback(() => {
     const now = Date.now();
     setGameState(prev => prev && ({
@@ -136,6 +160,40 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
     }));
     setIsGameActive(false);
   }, []);
+
+  const skipWord = useCallback(() => {
+    if (!gameState || !isGameActive || gameState.endTime || !gameState.startTime) return;
+    if (Date.now() - lastSkipTimeRef.current < SKIP_COOLDOWN_MS) return;
+
+    const SKIP_PENALTY = 5;
+    const elapsed = (Date.now() - gameState.startTime) / 1000;
+    const durationSecs = TIMED_DURATIONS[duration].duration;
+    const remaining = durationSecs - elapsed;
+
+    if (remaining <= SKIP_PENALTY) {
+      endGame();
+      return;
+    }
+
+    // Move the start time forward to effectively subtract time
+    setGameState(prev => {
+      if (!prev || !prev.startTime) return prev;
+      return {
+        ...prev,
+        startTime: prev.startTime - SKIP_PENALTY * 1000,
+        currentWordIndex: prev.currentWordIndex + 1,
+        comboStreak: 0,
+      };
+    });
+
+    lastSkipTimeRef.current = Date.now();
+    setSkipCooldownRemaining(SKIP_COOLDOWN_MS / 1000);
+    setSkippedWords(prev => [...prev, currentAnswer]);
+    setSelectedIndexes([]);
+    setCurrentGuess('');
+    wordStartTimeRef.current = Date.now();
+    currentAttemptsRef.current = 0;
+  }, [gameState, isGameActive, duration, currentAnswer, endGame]);
 
   /* Letter selection */
   const selectLetter = useCallback(
@@ -232,6 +290,7 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
       setSelectedIndexes([]);
       setCurrentGuess('');
       setWordStats([]);
+      setSkippedWords([]);
       currentAttemptsRef.current = 0;
     } finally {
       setLoading(false);
@@ -252,8 +311,11 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
     clearGuess,
     startGame,
     endGame,
+    skipWord,
     resetGame,
     loading,
     wordStats,
+    skippedWords,
+    skipCooldownRemaining,
   };
 }

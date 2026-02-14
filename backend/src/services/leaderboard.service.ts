@@ -1,4 +1,4 @@
-import { GameMode, LeaderboardEntry } from '@anaroo/shared';
+import { GameMode, LeaderboardEntry, TimedDuration } from '@anaroo/shared';
 import { redisService } from './redis.service';
 import { UserModel, RunModel } from '../models';
 
@@ -6,8 +6,8 @@ export class LeaderboardService {
   /**
    * Get global leaderboard with user details
    */
-  async getGlobalLeaderboard(mode: GameMode, limit: number = 50): Promise<LeaderboardEntry[]> {
-    const scores = await redisService.getGlobalLeaderboard(mode, limit);
+  async getGlobalLeaderboard(mode: GameMode, limit: number = 50, timedDuration?: TimedDuration): Promise<LeaderboardEntry[]> {
+    const scores = await redisService.getGlobalLeaderboard(mode, limit, timedDuration);
 
     // Fetch user details
     const userIds = scores.map(s => s.userId);
@@ -30,15 +30,19 @@ export class LeaderboardService {
 
     return scores.map((score, index) => {
       const user = userMap.get(score.userId);
+      // For daily mode, score is stored as negative timeElapsed — convert back
+      const isDaily = mode === GameMode.DAILY;
       return {
         userId: score.userId,
         nickname: user?.nickname || 'Unknown',
-        score: score.score,
+        score: isDaily ? 0 : score.score,
         rank: index + 1,
         createdAt: runMap.get(score.userId),
         avatarId: user?.avatarId || 'default',
         level: user?.level || 1,
         profileImage: user?.profileImage,
+        timeElapsed: isDaily ? Math.abs(score.score) : undefined,
+        timedDuration,
       };
     });
   }
@@ -46,8 +50,8 @@ export class LeaderboardService {
   /**
    * Get daily leaderboard with user details
    */
-  async getDailyLeaderboard(mode: GameMode, limit: number = 50): Promise<LeaderboardEntry[]> {
-    const scores = await redisService.getDailyLeaderboard(mode, limit);
+  async getDailyLeaderboard(mode: GameMode, limit: number = 50, timedDuration?: TimedDuration): Promise<LeaderboardEntry[]> {
+    const scores = await redisService.getDailyLeaderboard(mode, limit, timedDuration);
 
     // Fetch user details
     const userIds = scores.map(s => s.userId);
@@ -75,15 +79,19 @@ export class LeaderboardService {
 
     return scores.map((score, index) => {
       const user = userMap.get(score.userId);
+      // For daily mode, score is stored as negative timeElapsed — convert back
+      const isDaily = mode === GameMode.DAILY;
       return {
         userId: score.userId,
         nickname: user?.nickname || 'Unknown',
-        score: score.score,
+        score: isDaily ? 0 : score.score,
         rank: index + 1,
         createdAt: runMap.get(score.userId),
         avatarId: user?.avatarId || 'default',
         level: user?.level || 1,
         profileImage: user?.profileImage,
+        timeElapsed: isDaily ? Math.abs(score.score) : undefined,
+        timedDuration,
       };
     });
   }
@@ -91,8 +99,8 @@ export class LeaderboardService {
   /**
    * Get user's leaderboard position
    */
-  async getUserRank(userId: string, mode: GameMode) {
-    return await redisService.getUserRank(userId, mode);
+  async getUserRank(userId: string, mode: GameMode, timedDuration?: TimedDuration) {
+    return await redisService.getUserRank(userId, mode, timedDuration);
   }
 }
 
