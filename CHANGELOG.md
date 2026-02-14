@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.7](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.6...anaroo-v0.1.7) (2026-02-14)
+
+
+### Features
+
+* replace sequential scripts with Turborepo for parallel builds and caching ([214be20](https://github.com/adtommo/anaroo/commit/214be202b11e11771cf7c32f3ce2a9d02420c4d5))
+* replace sequential scripts with Turborepo for parallel builds and caching ([9e9d57c](https://github.com/adtommo/anaroo/commit/9e9d57cb8b2744764d91c135c30bbb80156ef1d4))
+
+
+### Bug Fixes
+
+* always run token verification in auth middleware ([a2ccf12](https://github.com/adtommo/anaroo/commit/a2ccf123a4ac35cabfe2b5e858932d6fcab04d8e))
+* make husky prepare script graceful for production installs ([21bc998](https://github.com/adtommo/anaroo/commit/21bc998b87c33002e30bc1103b79e6467f24a8f4))
+* sanitize user input in score service to prevent NoSQL injection ([8083d42](https://github.com/adtommo/anaroo/commit/8083d4236861769971322a4a05e7b61bbc271717))
+
 ## [0.1.6](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.5...anaroo-v0.1.6) (2026-02-13)
 
 
