@@ -17,6 +17,7 @@
 [![MongoDB](https://img.shields.io/badge/-MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![Redis](https://img.shields.io/badge/-Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![Docker](https://img.shields.io/badge/-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Turborepo](https://img.shields.io/badge/-Turborepo-EF4444?style=for-the-badge&logo=turborepo&logoColor=white)](https://turbo.build/)
 
 ---
 
@@ -36,6 +37,7 @@ A fast-paced word unscrambling game with timed challenges, infinite survival mod
 | Backend | Express, TypeScript |
 | Database | MongoDB, Redis |
 | Testing | Vitest, Cypress, Storybook |
+| Build | Turborepo |
 | Deployment | Docker Compose |
 
 ## Quick Start
@@ -50,7 +52,6 @@ Or manually:
 
 ```bash
 npm install
-npm run build --workspace=shared
 cp backend/.env.example backend/.env
 npm run dev
 ```

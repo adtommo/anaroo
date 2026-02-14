@@ -237,17 +237,21 @@ describe('InfiniteSurvival - Edge Cases', () => {
     await userEvent.keyboard('c');
     await userEvent.keyboard('a');
 
-    let usedTiles = screen.getAllByRole('button').filter(
-      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
-    );
-    expect(usedTiles).toHaveLength(2);
+    await waitFor(() => {
+      const usedTiles = screen.getAllByRole('button').filter(
+        btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+      );
+      expect(usedTiles).toHaveLength(2);
+    });
 
     await userEvent.keyboard('{Backspace}');
 
-    usedTiles = screen.getAllByRole('button').filter(
-      btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
-    );
-    expect(usedTiles).toHaveLength(1);
+    await waitFor(() => {
+      const usedTiles = screen.getAllByRole('button').filter(
+        btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled
+      );
+      expect(usedTiles).toHaveLength(1);
+    });
   });
 
   it('clear button resets all selected tiles', async () => {

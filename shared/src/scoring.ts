@@ -106,7 +106,7 @@ export function calculateScore(
   }
 
   // Calculate base score
-  let baseScore = wpm * accuracy;
+  const baseScore = wpm * accuracy;
 
   // Apply combo multiplier
   const comboBonus = Math.min(comboStreak * COMBO_MULTIPLIER, 2.0); // Max 200% bonus

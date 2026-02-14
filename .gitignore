@@ -39,3 +39,6 @@ coverage/
 .cache/
 *storybook.log
 storybook-static
+
+# Turbo
+.turbo
