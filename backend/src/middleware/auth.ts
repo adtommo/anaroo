@@ -35,12 +35,12 @@ export function optionalAuth(req: AuthRequest, _res: Response, next: NextFunctio
   req.userId = undefined; // default to unauthenticated
   const authHeader = req.headers.authorization;
 
-  if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    const decoded = verifyToken(token);
-    if (decoded) {
-      req.userId = decoded.userId;
-    }
+  const token = (typeof authHeader === 'string' && authHeader.startsWith('Bearer '))
+    ? authHeader.substring(7)
+    : '';
+  const decoded = verifyToken(token);
+  if (decoded) {
+    req.userId = decoded.userId;
   }
 
   next();
@@ -51,17 +51,14 @@ export function optionalAuth(req: AuthRequest, _res: Response, next: NextFunctio
  */
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
   req.userId = undefined; // default
-
   const authHeader = req.headers.authorization;
-  if (!authHeader || typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'No authentication token provided' });
-    return;
-  }
 
-  const token = authHeader.substring(7);
+  const token = (typeof authHeader === 'string' && authHeader.startsWith('Bearer '))
+    ? authHeader.substring(7)
+    : '';
   const decoded = verifyToken(token);
   if (!decoded) {
-    res.status(401).json({ error: 'Invalid authentication token' });
+    res.status(401).json({ error: 'Invalid or missing authentication token' });
     return;
   }
 
