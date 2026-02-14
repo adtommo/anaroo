@@ -11,7 +11,8 @@
     "generate:words": "tsx src/scripts/generate-words.ts",
     "seed:words": "tsx src/scripts/seed-anagram-groups.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anaroo/shared": "*",

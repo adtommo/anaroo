@@ -25,7 +25,7 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
   );
 
   const [isGameActive, setIsGameActive] = useState(false);
-  const [currentTime, setCurrentTime] = useState(Date.now());
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
 
   // Letter-based input
   const [selectedIndexes, setSelectedIndexes] = useState<number[]>([]);
