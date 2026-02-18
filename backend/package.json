@@ -1,6 +1,6 @@
 {
   "name": "@anaroo/backend",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "commonjs",
   "main": "dist/server.js",
   "scripts": {
