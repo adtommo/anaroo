@@ -1,6 +1,6 @@
 {
   "name": "anaroo",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "packageManager": "npm@11.8.0",
   "workspaces": [
