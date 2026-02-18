@@ -1,6 +1,5 @@
 import { GameMode, TimedDuration, GAME_MODES, TIMED_DURATIONS } from '@anaroo/shared';
-import { useGameSettings, Language, Difficulty } from '../contexts/GameSettingsContext';
-import { SearchableSelect } from './SearchableSelect';
+import { useGameSettings, Difficulty } from '../contexts/GameSettingsContext';
 import { JSX } from 'react';
 
 interface GameSelectorProps {
@@ -10,13 +9,6 @@ interface GameSelectorProps {
   onDurationChange: (duration: TimedDuration) => void;
   onStartGame: () => void;
 }
-
-const LANGUAGES: { value: Language; label: string }[] = [
-  { value: 'en', label: 'english' },
-  { value: 'es', label: 'spanish' },
-  { value: 'fr', label: 'french' },
-  { value: 'de', label: 'german' },
-];
 
 const DIFFICULTIES: { value: Difficulty; label: string }[] = [
   { value: 'easy', label: 'easy' },
@@ -51,7 +43,7 @@ export function GameSelector({
   onDurationChange,
   onStartGame,
 }: GameSelectorProps) {
-  const { settings, setLanguage, setDifficulty } = useGameSettings();
+  const { settings, setDifficulty } = useGameSettings();
 
   const showDuration = selectedMode === GameMode.TIMED;
   const showDifficulty = selectedMode !== GameMode.DAILY;
@@ -81,16 +73,6 @@ export function GameSelector({
 
       {/* Settings Panel */}
       <div className="game-settings-panel">
-        {/* Language */}
-        <div className="settings-row">
-          <span className="settings-label">language</span>
-          <SearchableSelect
-            options={LANGUAGES}
-            value={settings.language}
-            onChange={(v) => setLanguage(v as Language)}
-          />
-        </div>
-
         {/* Difficulty */}
         {showDifficulty && (
           <div className="settings-row">

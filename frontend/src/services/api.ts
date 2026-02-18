@@ -134,8 +134,22 @@ class ApiService {
   }
 
   // Daily challenge endpoints
-  async getTodayChallenge(): Promise<DailyChallenge> {
-    return this.request<DailyChallenge>('/daily');
+  async getTodayChallenge(): Promise<Omit<DailyChallenge, 'word'> & { letterCount: number }> {
+    return this.request<Omit<DailyChallenge, 'word'> & { letterCount: number }>('/daily');
+  }
+
+  async dailyGuess(guess: string): Promise<{ correct: boolean; word?: string }> {
+    return this.request<{ correct: boolean; word?: string }>('/daily/guess', {
+      method: 'POST',
+      body: JSON.stringify({ guess }),
+    });
+  }
+
+  async dailyReveal(revealedPositions: number[]): Promise<{ position: number; letter: string }> {
+    return this.request<{ position: number; letter: string }>('/daily/reveal', {
+      method: 'POST',
+      body: JSON.stringify({ revealedPositions }),
+    });
   }
 
   async getDailyStatus(): Promise<{ completed: boolean; timeElapsed?: number; word?: string }> {

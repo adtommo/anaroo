@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DailyChallenge, SubmitScoreResponse } from '@anaroo/shared';
+import { SubmitScoreResponse } from '@anaroo/shared';
 import { useDaily } from '../hooks/useDaily';
 import { useAuth } from '../contexts/AuthContext';
 import { useSound } from '../hooks/useSound';
@@ -7,10 +7,44 @@ import { apiService } from '../services/api';
 import { AuthModal } from './AuthModal';
 import { AdUnit } from './AdUnit';
 
+const DAILY_COMPLETION_KEY = 'anaroo_daily_completion';
+
+function getTodayUTC(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getLocalDailyCompletion(): { completed: boolean; timeElapsed?: number; word?: string } {
+  try {
+    const raw = localStorage.getItem(DAILY_COMPLETION_KEY);
+    if (!raw) return { completed: false };
+    const data = JSON.parse(raw);
+    if (data.date === getTodayUTC()) {
+      return { completed: true, timeElapsed: data.timeElapsed, word: data.word };
+    }
+    return { completed: false };
+  } catch {
+    return { completed: false };
+  }
+}
+
+function saveLocalDailyCompletion(timeElapsed: number, word: string): void {
+  localStorage.setItem(
+    DAILY_COMPLETION_KEY,
+    JSON.stringify({ date: getTodayUTC(), timeElapsed, word })
+  );
+}
+
 export function Daily() {
   const { user, loading: authLoading } = useAuth();
   const { playCorrect } = useSound();
-  const [challenge, setChallenge] = useState<DailyChallenge | null>(null);
+  const [challenge, setChallenge] = useState<{
+    _id?: string;
+    date: string;
+    letterCount: number;
+    scrambled: string;
+    seed: string;
+    createdAt: Date;
+  } | null>(null);
   const [completed, setCompleted] = useState(false);
   const [previousTime, setPreviousTime] = useState<number | null>(null);
   const [previousWord, setPreviousWord] = useState<string | null>(null);
@@ -34,7 +68,7 @@ export function Daily() {
         apiService.getTodayChallenge(),
         user
           ? apiService.getDailyStatus()
-          : Promise.resolve({ completed: false } as { completed: boolean; timeElapsed?: number; word?: string }),
+          : Promise.resolve(getLocalDailyCompletion()),
       ]);
 
       setChallenge(challengeData);
@@ -65,9 +99,9 @@ export function Daily() {
     config,
     startGame,
   } = useDaily(
-    challenge?.word || '',
     challenge?.scrambled || '',
-    challenge?.seed || ''
+    challenge?.seed || '',
+    challenge?.letterCount || 0
   );
 
   /** Start game once challenge is loaded */
@@ -106,6 +140,18 @@ export function Daily() {
       submitScore();
     }
   }, [gameState.endTime, user, submitting, result, completed, challenge]);
+
+  /** Save completion locally for anonymous users */
+  useEffect(() => {
+    if (gameState.endTime && gameState.startTime && !user && answer) {
+      const rawTime = (gameState.endTime - gameState.startTime) / 1000;
+      const finalTime = rawTime + gameState.timePenalty;
+      saveLocalDailyCompletion(finalTime, answer);
+      setCompleted(true);
+      setPreviousTime(finalTime);
+      setPreviousWord(answer);
+    }
+  }, [gameState.endTime, gameState.startTime, user, answer]);
 
   const submitScore = async () => {
     if (!user || !gameState.startTime || !gameState.endTime || !challenge) return;
@@ -155,7 +201,8 @@ export function Daily() {
 
       const key = e.key.toLowerCase();
       const index = scrambledLetters.findIndex(
-        (letter, i) => letter === key && !selectedIndexes.includes(i)
+        (letter, i) =>
+          letter === key && !selectedIndexes.includes(i) && !revealedTileIndexes.includes(i)
       );
 
       if (index !== -1) selectLetter(index);
@@ -169,6 +216,7 @@ export function Daily() {
     completed,
     scrambledLetters,
     selectedIndexes,
+    revealedTileIndexes,
     selectLetter,
     removeLastLetter,
   ]);
@@ -244,7 +292,7 @@ export function Daily() {
 
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
-        <AdUnit slot="GAME_RESULT" className="ad-h" />
+        <AdUnit placement="result" format="horizontal" className="ad-h" />
 
         <div className="actions">
           <button className="btn-primary" disabled>

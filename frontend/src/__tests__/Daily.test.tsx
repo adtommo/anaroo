@@ -8,12 +8,19 @@ vi.mock('../services/api', () => ({
     getTodayChallenge: vi.fn().mockResolvedValue({
       _id: 'challenge-1',
       date: '2025-01-15',
-      word: 'cat',
+      letterCount: 3,
       scrambled: 'tac',
       seed: 'daily-2025-01-15',
       createdAt: new Date(),
     }),
     getDailyStatus: vi.fn().mockResolvedValue({ completed: false }),
+    dailyGuess: vi.fn().mockImplementation((guess: string) => {
+      if (guess.toLowerCase() === 'cat') {
+        return Promise.resolve({ correct: true, word: 'cat' });
+      }
+      return Promise.resolve({ correct: false });
+    }),
+    dailyReveal: vi.fn().mockResolvedValue({ position: 0, letter: 'c' }),
     submitScore: vi.fn().mockResolvedValue({
       success: true,
       run: {
@@ -147,7 +154,7 @@ describe('Daily - Game Simulation', () => {
     // Spell wrong: "tac" ≠ "cat"
     await spellWord('tac');
 
-    // Tiles should reset (all available again)
+    // Tiles should reset (all available again) after async guess
     await waitFor(() => {
       const availableTiles = screen.getAllByRole('button').filter(
         btn => btn.classList.contains('letter-tile') && !(btn as HTMLButtonElement).disabled
@@ -281,8 +288,8 @@ describe('Daily - Edge Cases', () => {
     render(<Daily />);
     await waitForGameReady();
 
-    await userEvent.keyboard('c');
-    await userEvent.keyboard('a');
+    await clickLetter('c');
+    await clickLetter('a');
 
     let usedTiles = screen.getAllByRole('button').filter(
       btn => btn.classList.contains('letter-tile') && (btn as HTMLButtonElement).disabled

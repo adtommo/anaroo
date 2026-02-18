@@ -36,7 +36,6 @@ function MenuPage() {
     const params = new URLSearchParams({
       mode: selectedMode,
       duration: selectedDuration.toString(),
-      language: settings.language,
       difficulty: settings.difficulty,
     });
     navigate(`/play?${params.toString()}`);
@@ -86,7 +85,6 @@ function GamePage() {
 
   const mode = (searchParams.get('mode') as GameMode) || GameMode.TIMED;
   const duration = (parseInt(searchParams.get('duration') || '60', 10) as TimedDuration) || TimedDuration.SIXTY;
-  const language = searchParams.get('language') || settings.language;
   const difficulty = searchParams.get('difficulty') || settings.difficulty;
 
   const renderGameMode = () => {
@@ -97,14 +95,12 @@ function GamePage() {
         return (
           <TimedMode
             duration={duration}
-            language={language}
             difficulty={difficulty}
           />
         );
       case GameMode.INFINITE_SURVIVAL:
         return (
           <InfiniteSurvival
-            language={language}
             difficulty={difficulty}
           />
         );
@@ -325,7 +321,7 @@ function App() {
 
       <div className="app-body">
         <div className={`ad-sidebar ad-sidebar-left${isPlaying ? ' focus' : ''}`}>
-          <AdUnit slot="LEFT_SIDEBAR" format="vertical" />
+          <AdUnit placement="sidebar" format="vertical" />
         </div>
 
         <main id="main-content" className="main-content" role="main">
@@ -345,7 +341,7 @@ function App() {
         </main>
 
         <div className={`ad-sidebar ad-sidebar-right${isPlaying ? ' focus' : ''}`}>
-          <AdUnit slot="RIGHT_SIDEBAR" format="vertical" />
+          <AdUnit placement="sidebar" format="vertical" />
         </div>
       </div>
 

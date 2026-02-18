@@ -502,6 +502,21 @@ button {
   width: 100%;
   max-width: 500px;
   padding: var(--spacing-sm);
+  background: none;
+  border-radius: var(--radius-md);
+
+  @media (min-width: 640px) {
+    padding: var(--spacing-md);
+  }
+}
+
+.game-settings-panel > :not(:empty){
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+  max-width: 500px;
+  padding: var(--spacing-sm);
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
 
@@ -3129,6 +3144,43 @@ button {
   font-size: 0.7rem !important;
   white-space: nowrap;
   text-align: right;
+}
+
+/* ─── Ad Settings ─── */
+.ad-section-desc {
+  color: var(--sub-color);
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  margin-bottom: var(--spacing-md);
+}
+
+.ad-level-options {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-sm);
+}
+
+.ad-level-desc {
+  color: var(--sub-color);
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+}
+
+/* ─── Ad Blocker Message ─── */
+.ad-blocker-message {
+  text-align: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  color: var(--sub-color);
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+
+  p {
+    margin: 0;
+    line-height: 1.6;
+  }
 }
 
 /* ─── High Contrast Mode ─── */

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   GameState,
   GameMode,
@@ -6,16 +6,17 @@ import {
   getModeConfig,
   canRevealNext,
   getSecondsUntilNextReveal,
-  revealNextLetter,
   getRevealPenalty,
 } from '@anaroo/shared';
+import { apiService } from '../services/api';
 
 /**
  * Hook for daily mode - single word with hints
+ * Answer is never known client-side until the server confirms a correct guess.
  */
-export function useDaily(answer: string, scrambled: string, seed: string) {
+export function useDaily(scrambled: string, seed: string, letterCount: number) {
   const config = getModeConfig(GameMode.DAILY);
-  
+
   const [gameState, setGameState] = useState<GameState>(() =>
     createInitialGameState({
       words: [scrambled],
@@ -32,6 +33,14 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
   const [currentGuess, setCurrentGuess] = useState('');
   // Track which scrambled tile indexes are consumed by reveals
   const [revealedTileIndexes, setRevealedTileIndexes] = useState<number[]>([]);
+
+  // Server-side state
+  const [revealedLetterMap, setRevealedLetterMap] = useState<Record<number, string>>({});
+  const [answer, setAnswer] = useState('');
+  const [guessing, setGuessing] = useState(false);
+
+  // Ref to prevent double-submit in strict mode
+  const guessInFlight = useRef(false);
 
   const scrambledLetters = useMemo(
     () => scrambled.split(''),
@@ -50,6 +59,9 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
       setSelectedIndexes([]);
       setCurrentGuess('');
       setRevealedTileIndexes([]);
+      setRevealedLetterMap({});
+      setAnswer('');
+      setGuessing(false);
     }
   }, [scrambled, seed]);
 
@@ -84,7 +96,7 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
   /* Letter selection */
   const selectLetter = useCallback(
     (index: number) => {
-      if (!isGameActive || gameState.endTime) return;
+      if (!isGameActive || gameState.endTime || guessing) return;
       if (selectedIndexes.includes(index)) return;
 
       if (!gameState.startTime) {
@@ -94,27 +106,29 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
       setSelectedIndexes(prev => [...prev, index]);
       setCurrentGuess(prev => prev + scrambledLetters[index]);
     },
-    [isGameActive, gameState.endTime, gameState.startTime, scrambledLetters, selectedIndexes, startGame]
+    [isGameActive, gameState.endTime, gameState.startTime, scrambledLetters, selectedIndexes, startGame, guessing]
   );
 
   const removeLastLetter = useCallback(() => {
+    if (guessing) return;
     setSelectedIndexes(prev => prev.slice(0, -1));
     setCurrentGuess(prev => prev.slice(0, -1));
-  }, []);
+  }, [guessing]);
 
   const clearGuess = useCallback(() => {
+    if (guessing) return;
     setSelectedIndexes([]);
     setCurrentGuess('');
-  }, []);
+  }, [guessing]);
 
   /* Build the current answer with revealed letters */
   const buildAnswerWithReveals = useCallback(() => {
     const result: string[] = [];
     let guessIndex = 0;
 
-    for (let i = 0; i < answer.length; i++) {
-      if (gameState.revealedLetters.includes(i)) {
-        result.push(answer[i]);
+    for (let i = 0; i < letterCount; i++) {
+      if (revealedLetterMap[i] !== undefined) {
+        result.push(revealedLetterMap[i]);
       } else {
         if (guessIndex < currentGuess.length) {
           result.push(currentGuess[guessIndex]);
@@ -126,53 +140,60 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
     }
 
     return result.join('');
-  }, [answer, gameState.revealedLetters, currentGuess]);
-
-  /* Check if word is solved */
-  const checkSolved = useCallback(() => {
-    const requiredLength = answer.length - gameState.revealedLetters.length;
-    if (currentGuess.length !== requiredLength) return false;
-
-    // Build complete answer from guess + revealed letters
-    let guessIndex = 0;
-    for (let i = 0; i < answer.length; i++) {
-      if (gameState.revealedLetters.includes(i)) {
-        continue; // Skip revealed positions
-      }
-
-      if (guessIndex >= currentGuess.length) return false;
-      if (currentGuess[guessIndex].toLowerCase() !== answer[i].toLowerCase()) {
-        return false;
-      }
-      guessIndex++;
-    }
-
-    return true;
-  }, [answer, currentGuess, gameState.revealedLetters]);
+  }, [letterCount, revealedLetterMap, currentGuess]);
 
   /* Auto-submit when full length reached */
   useEffect(() => {
-    const requiredLength = answer.length - gameState.revealedLetters.length;
-    if (currentGuess.length !== requiredLength) return;
+    const revealedCount = gameState.revealedLetters.length;
+    const requiredLength = letterCount - revealedCount;
+    if (requiredLength <= 0 || currentGuess.length !== requiredLength) return;
+    if (guessInFlight.current) return;
 
-    if (checkSolved()) {
-      // Correct - end game
-      setGameState(prev => ({
-        ...prev,
-        correctChars: answer.length,
-        solvedWords: [answer],
-      }));
-      endGame();
-    } else {
-      // Incorrect - reset guess
-      setGameState(prev => ({
-        ...prev,
-        incorrectChars: prev.incorrectChars + currentGuess.length,
-      }));
+    // Build full word by merging revealed letters + user guess
+    const fullWord: string[] = [];
+    let guessIndex = 0;
+    for (let i = 0; i < letterCount; i++) {
+      if (revealedLetterMap[i] !== undefined) {
+        fullWord.push(revealedLetterMap[i]);
+      } else {
+        fullWord.push(currentGuess[guessIndex]);
+        guessIndex++;
+      }
+    }
+
+    const guessWord = fullWord.join('');
+    guessInFlight.current = true;
+    setGuessing(true);
+
+    apiService.dailyGuess(guessWord).then(result => {
+      guessInFlight.current = false;
+      setGuessing(false);
+
+      if (result.correct && result.word) {
+        setAnswer(result.word);
+        setGameState(prev => ({
+          ...prev,
+          correctChars: letterCount,
+          solvedWords: [result.word!],
+        }));
+        endGame();
+      } else {
+        // Incorrect - reset guess
+        setGameState(prev => ({
+          ...prev,
+          incorrectChars: prev.incorrectChars + currentGuess.length,
+        }));
+        setSelectedIndexes([]);
+        setCurrentGuess('');
+      }
+    }).catch(() => {
+      guessInFlight.current = false;
+      setGuessing(false);
+      // On network error, just reset the guess so user can try again
       setSelectedIndexes([]);
       setCurrentGuess('');
-    }
-  }, [currentGuess, answer, gameState.revealedLetters.length, checkSolved, endGame]);
+    });
+  }, [currentGuess, letterCount, gameState.revealedLetters.length, revealedLetterMap, endGame]);
 
   const revealLetter = useCallback(() => {
     if (!config.hintsEnabled) return;
@@ -183,32 +204,35 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
       return;
     }
 
-    // Reveal next letter
-    const nextIndex = revealNextLetter(answer, gameState.revealedLetters);
-
-    if (nextIndex === -1) return; // All letters revealed
-
     // Clear user's current input when revealing
     setSelectedIndexes([]);
     setCurrentGuess('');
 
-    // Find a matching scrambled tile to mark as revealed (only exclude already-revealed tiles)
-    const revealedChar = answer[nextIndex].toLowerCase();
-    const tileIndex = scrambledLetters.findIndex(
-      (letter, i) => letter.toLowerCase() === revealedChar && !revealedTileIndexes.includes(i)
-    );
+    apiService.dailyReveal(gameState.revealedLetters).then(result => {
+      if (result.position === -1) return; // All letters revealed
 
-    if (tileIndex !== -1) {
-      setRevealedTileIndexes(prev => [...prev, tileIndex]);
-    }
+      // Update revealed letter map with server response
+      setRevealedLetterMap(prev => ({ ...prev, [result.position]: result.letter }));
 
-    setGameState(prev => ({
-      ...prev,
-      revealedLetters: [...prev.revealedLetters, nextIndex],
-      revealsUsed: prev.revealsUsed + 1,
-      timePenalty: getRevealPenalty(prev.revealsUsed + 1, GameMode.DAILY),
-      lastRevealTime: currentTime,
-    }));
+      // Find a matching scrambled tile to mark as revealed
+      const revealedChar = result.letter.toLowerCase();
+      setRevealedTileIndexes(prev => {
+        const tileIndex = scrambledLetters.findIndex(
+          (letter, i) => letter.toLowerCase() === revealedChar && !prev.includes(i)
+        );
+        return tileIndex !== -1 ? [...prev, tileIndex] : prev;
+      });
+
+      setGameState(prev => ({
+        ...prev,
+        revealedLetters: [...prev.revealedLetters, result.position],
+        revealsUsed: prev.revealsUsed + 1,
+        timePenalty: getRevealPenalty(prev.revealsUsed + 1, GameMode.DAILY),
+        lastRevealTime: Date.now(),
+      }));
+    }).catch(err => {
+      console.error('Failed to reveal letter:', err);
+    });
   }, [
     config.hintsEnabled,
     isGameActive,
@@ -216,10 +240,7 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
     gameState.revealsUsed,
     gameState.revealedLetters,
     currentTime,
-    answer,
     scrambledLetters,
-    selectedIndexes,
-    revealedTileIndexes,
   ]);
 
   const resetGame = useCallback(() => {
@@ -232,6 +253,9 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
     setSelectedIndexes([]);
     setCurrentGuess('');
     setRevealedTileIndexes([]);
+    setRevealedLetterMap({});
+    setAnswer('');
+    setGuessing(false);
   }, [scrambled, seed]);
 
   // Calculate hint availability
@@ -239,7 +263,7 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
     isGameActive &&
     gameState.startTime !== null &&
     canRevealNext(gameState.revealsUsed, currentTime, gameState.startTime, GameMode.DAILY);
-  
+
   const secondsUntilReveal = config.hintsEnabled &&
     gameState.startTime !== null
       ? getSecondsUntilNextReveal(gameState.revealsUsed, currentTime, gameState.startTime, GameMode.DAILY)
@@ -253,6 +277,7 @@ export function useDaily(answer: string, scrambled: string, seed: string) {
     revealedTileIndexes,
     currentGuess,
     answer,
+    guessing,
     buildAnswerWithReveals,
     selectLetter,
     removeLastLetter,

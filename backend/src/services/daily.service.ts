@@ -1,4 +1,4 @@
-import { DailyChallenge, GameMode, scrambleWord, SeededRandom } from '@anaroo/shared';
+import { DailyChallenge, GameMode, scrambleWord, SeededRandom, revealNextLetter } from '@anaroo/shared';
 import { AnagramGroupModel, DailyChallengeModel } from '../models';
 
 export class DailyChallengeService {
@@ -130,6 +130,27 @@ export class DailyChallengeService {
   async hasCompletedToday(userId: string): Promise<boolean> {
     const status = await this.getTodayStatus(userId);
     return status.completed;
+  }
+
+  /**
+   * Validate a guess against today's daily challenge word
+   */
+  async validateGuess(guess: string): Promise<{ correct: boolean; word?: string }> {
+    const challenge = await this.getTodayChallenge();
+    const correct = guess.toLowerCase() === challenge.word.toLowerCase();
+    return correct ? { correct: true, word: challenge.word } : { correct: false };
+  }
+
+  /**
+   * Get the next letter to reveal for today's challenge
+   */
+  async getNextReveal(revealedPositions: number[]): Promise<{ position: number; letter: string }> {
+    const challenge = await this.getTodayChallenge();
+    const position = revealNextLetter(challenge.word, revealedPositions);
+    if (position === -1) {
+      return { position: -1, letter: '' };
+    }
+    return { position, letter: challenge.word[position] };
   }
 
   /**

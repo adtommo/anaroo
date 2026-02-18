@@ -47,7 +47,6 @@ export function About({ onBack }: AboutProps) {
         <section>
           <h2>Features</h2>
           <ul>
-            <li><strong>Multiple Languages</strong> - Play in English, Spanish, French, or German</li>
             <li><strong>Difficulty Levels</strong> - Choose Easy, Medium, or Hard word sets</li>
             <li><strong>XP & Levels</strong> - Earn experience and level up as you play</li>
             <li><strong>Leaderboards</strong> - Compete globally and daily</li>
