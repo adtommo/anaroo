@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.8](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.7...anaroo-v0.1.8) (2026-02-18)
+
+
+### Bug Fixes
+
+* move daily challenge answer validation to server side ([0bcd3c4](https://github.com/adtommo/anaroo/commit/0bcd3c466f562b8f7c1864b4b94bb7c8a77b19c3))
+* move daily challenge answer validation to server side ([a0ba920](https://github.com/adtommo/anaroo/commit/a0ba920ad2bfba68621d7b3df71ead61e891ea7c))
+
 ## [0.1.7](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.6...anaroo-v0.1.7) (2026-02-14)
 
 
