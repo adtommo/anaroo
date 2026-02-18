@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.9](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.8...anaroo-v0.1.9) (2026-02-18)
+
+
+### Bug Fixes
+
+* update Cypress e2e tests for server side daily validation and UI changes ([6114812](https://github.com/adtommo/anaroo/commit/61148128b532a3f27fdbc93c186c2eb04cb23fab))
+* update Cypress e2e tests for server side daily validation and UI… ([5428f7c](https://github.com/adtommo/anaroo/commit/5428f7c3866f2a4a84f75a56526ad1f13165ada6))
+
 ## [0.1.8](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.7...anaroo-v0.1.8) (2026-02-18)
 
 
