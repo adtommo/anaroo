@@ -6,6 +6,7 @@ import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { GameSettingsProvider } from './contexts/GameSettingsContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AdProvider } from './contexts/AdContext';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -15,7 +16,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <AuthProvider>
           <ThemeProvider>
             <GameSettingsProvider>
-              <App />
+              <AdProvider>
+                <App />
+              </AdProvider>
             </GameSettingsProvider>
           </ThemeProvider>
         </AuthProvider>

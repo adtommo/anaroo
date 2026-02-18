@@ -10,6 +10,7 @@ import {
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAds } from '../contexts/AdContext';
 import { ProfileAvatar } from './ProfileAvatar';
 
 interface ProfileProps {
@@ -26,6 +27,7 @@ const MODE_LABELS: Record<string, string> = {
 export function Profile({ onBack, onLogout }: ProfileProps) {
   const { updateUser } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { adLevel, setAdLevel } = useAds();
   const [profile, setProfile] = useState<EnrichedUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -315,6 +317,28 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* ── Ads ── */}
+      <div className="profile-section">
+        <h3>Ads</h3>
+        <p className="ad-section-desc">
+          Ads help keep Anaroo free. You can adjust the level or turn them off entirely.
+        </p>
+        <div className="ad-level-options">
+          {(['off', 'result', 'on', 'sellout'] as const).map((level) => (
+            <button
+              key={level}
+              className={`settings-button ${adLevel === level ? 'active' : ''}`}
+              onClick={() => setAdLevel(level)}
+            >
+              {level}
+            </button>
+          ))}
+        </div>
+        <p className="ad-level-desc">
+          {{ off: 'No ads. Thanks for playing!', result: 'One ad on the result screen.', on: 'Result + sidebar banners.', sellout: 'Maximum ads. Thanks for the support!' }[adLevel]}
+        </p>
       </div>
 
       {/* ── Account ── */}

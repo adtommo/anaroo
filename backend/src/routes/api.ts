@@ -212,7 +212,7 @@ router.get('/daily', async (req: Request, res: Response): Promise<void> => {
     res.json({
       _id: challenge._id,
       date: challenge.date,
-      word: challenge.word,
+      letterCount: challenge.word.length,
       scrambled: challenge.scrambled,
       seed: challenge.seed,
       createdAt: challenge.createdAt,
@@ -220,6 +220,48 @@ router.get('/daily', async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     console.error('Get daily challenge error:', error);
     res.status(500).json({ error: 'Failed to fetch daily challenge' });
+  }
+});
+
+/**
+ * POST /api/daily/guess
+ * Validate a guess against today's daily challenge
+ */
+router.post('/daily/guess', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { guess } = req.body;
+
+    if (!guess || typeof guess !== 'string') {
+      res.status(400).json({ error: 'guess is required' });
+      return;
+    }
+
+    const result = await dailyChallengeService.validateGuess(guess);
+    res.json(result);
+  } catch (error) {
+    console.error('Daily guess error:', error);
+    res.status(500).json({ error: 'Failed to validate guess' });
+  }
+});
+
+/**
+ * POST /api/daily/reveal
+ * Get the next letter to reveal for today's daily challenge
+ */
+router.post('/daily/reveal', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { revealedPositions } = req.body;
+
+    if (!Array.isArray(revealedPositions)) {
+      res.status(400).json({ error: 'revealedPositions must be an array' });
+      return;
+    }
+
+    const result = await dailyChallengeService.getNextReveal(revealedPositions);
+    res.json(result);
+  } catch (error) {
+    console.error('Daily reveal error:', error);
+    res.status(500).json({ error: 'Failed to reveal letter' });
   }
 });
 

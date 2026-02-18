@@ -8,11 +8,10 @@ import { AuthModal } from './AuthModal';
 import { AdUnit } from './AdUnit';
 
 interface InfiniteSurvivalProps {
-  language: string;
   difficulty: string;
 }
 
-export function InfiniteSurvival({ language, difficulty }: InfiniteSurvivalProps) {
+export function InfiniteSurvival({ difficulty }: InfiniteSurvivalProps) {
   const { user } = useAuth();
   const {
     gameState,
@@ -32,7 +31,7 @@ export function InfiniteSurvival({ language, difficulty }: InfiniteSurvivalProps
     loading,
     skippedWords,
     skipCooldownRemaining,
-  } = useInfiniteSurvival({ language, difficulty });
+  } = useInfiniteSurvival({ difficulty });
 
   const { playCorrect, playIncorrect, playSkip, playGameOver } = useSound();
   const [submitting, setSubmitting] = useState(false);
@@ -236,7 +235,7 @@ export function InfiniteSurvival({ language, difficulty }: InfiniteSurvivalProps
 
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
-        <AdUnit slot="GAME_RESULT" className="ad-h" />
+        <AdUnit placement="result" format="horizontal" className="ad-h" />
 
         <div className="actions">
           <button className="btn-primary" onClick={resetGame}>

@@ -12,7 +12,6 @@ import { apiService } from '../services/api';
 
 interface UseTimedModeOptions {
   duration: TimedDuration;
-  language: string;
   difficulty: string;
 }
 
@@ -23,7 +22,7 @@ export interface WordStat {
   timeToSolve?: number; // ms from when word appeared to solve
 }
 
-export function useTimedMode({ duration, language, difficulty }: UseTimedModeOptions) {
+export function useTimedMode({ duration, difficulty }: UseTimedModeOptions) {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [answers, setAnswers] = useState<string[]>([]);
   const [timeRemaining, setTimeRemaining] = useState(TIMED_DURATIONS[duration].duration);
@@ -48,19 +47,19 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
   const [skipCooldownRemaining, setSkipCooldownRemaining] = useState(0);
 
   // Track settings to detect changes
-  const settingsRef = useRef({ language, difficulty });
+  const settingsRef = useRef({ difficulty });
 
   /* Fetch words from backend on mount or when settings change */
   useEffect(() => {
     let isMounted = true;
 
     // Update settings ref for future comparisons
-    settingsRef.current = { language, difficulty };
+    settingsRef.current = { difficulty };
 
     async function initGame() {
       try {
         setLoading(true);
-        const { words: results } = await apiService.getWordPicks(20, language, difficulty as 'easy' | 'medium' | 'hard');
+        const { words: results } = await apiService.getWordPicks(20, 'en', difficulty as 'easy' | 'medium' | 'hard');
 
         if (!isMounted) return;
 
@@ -89,7 +88,7 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
 
     initGame();
     return () => { isMounted = false; };
-  }, [duration, language, difficulty]);
+  }, [duration, difficulty]);
 
   const currentScrambled = useMemo(() => {
     if (!gameState) return '';
@@ -275,7 +274,7 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
   const resetGame = useCallback(async () => {
     setLoading(true);
     try {
-      const { words: results } = await apiService.getWordPicks(20, language, difficulty as 'easy' | 'medium' | 'hard');
+      const { words: results } = await apiService.getWordPicks(20, 'en', difficulty as 'easy' | 'medium' | 'hard');
 
       setGameState(createInitialGameState({
         words: results.map(r => r.scrambled),
@@ -295,7 +294,7 @@ export function useTimedMode({ duration, language, difficulty }: UseTimedModeOpt
     } finally {
       setLoading(false);
     }
-  }, [duration, language, difficulty]);
+  }, [duration, difficulty]);
 
   return {
     gameState,

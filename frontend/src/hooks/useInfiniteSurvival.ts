@@ -13,11 +13,10 @@ import { apiService } from '../services/api';
 const BATCH_SIZE = 10;
 
 interface UseInfiniteSurvivalOptions {
-  language: string;
   difficulty: string;
 }
 
-export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurvivalOptions) {
+export function useInfiniteSurvival({ difficulty }: UseInfiniteSurvivalOptions) {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [answers, setAnswers] = useState<string[]>([]);
   const [wordTimeRemaining, setWordTimeRemaining] = useState(SURVIVAL_CONFIG.initialTimePerWord);
@@ -42,9 +41,9 @@ export function useInfiniteSurvival({ language, difficulty }: UseInfiniteSurviva
 
   /** Fetch a batch of distinct words */
   const fetchWords = useCallback(async (count: number) => {
-    const { words } = await apiService.getWordPicks(count, language, difficulty as 'easy' | 'medium' | 'hard');
+    const { words } = await apiService.getWordPicks(count, 'en', difficulty as 'easy' | 'medium' | 'hard');
     return words;
-  }, [language, difficulty]);
+  }, [difficulty]);
 
   /* Fetch words from backend on mount or when settings change */
   useEffect(() => {

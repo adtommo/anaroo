@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { UserModel } from '../models';
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -49,7 +50,7 @@ export function optionalAuth(req: AuthRequest, _res: Response, next: NextFunctio
 /**
  * Required authentication middleware
  */
-export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
+export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   req.userId = undefined; // default
   const authHeader = req.headers.authorization;
 
@@ -59,6 +60,12 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
   const decoded = verifyToken(token);
   if (!decoded) {
     res.status(401).json({ error: 'Invalid or missing authentication token' });
+    return;
+  }
+
+  const userExists = await UserModel.exists({ _id: decoded.userId });
+  if (!userExists) {
+    res.status(401).json({ error: 'User no longer exists' });
     return;
   }
 

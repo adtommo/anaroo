@@ -1,37 +1,19 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type Language = 'en' | 'es' | 'fr' | 'de';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export interface GameSettings {
-  language: Language;
   difficulty: Difficulty;
   soundEnabled: boolean;
 }
 
 interface GameSettingsContextType {
   settings: GameSettings;
-  setLanguage: (lang: Language) => void;
   setDifficulty: (diff: Difficulty) => void;
   setSoundEnabled: (enabled: boolean) => void;
 }
 
 const STORAGE_KEY = 'anaroo_game_settings';
-
-const SUPPORTED_LANGUAGES: Language[] = ['en', 'es', 'fr', 'de'];
-
-function detectBrowserLanguage(): Language {
-  // Get browser language (e.g., 'en-US', 'es', 'fr-FR')
-  const browserLang = navigator.language?.split('-')[0]?.toLowerCase();
-
-  // Check if it's a supported language
-  if (browserLang && SUPPORTED_LANGUAGES.includes(browserLang as Language)) {
-    return browserLang as Language;
-  }
-
-  // Fallback to English
-  return 'en';
-}
 
 function loadSettings(): GameSettings {
   try {
@@ -39,7 +21,6 @@ function loadSettings(): GameSettings {
     if (stored) {
       const parsed = JSON.parse(stored);
       return {
-        language: SUPPORTED_LANGUAGES.includes(parsed.language) ? parsed.language : detectBrowserLanguage(),
         difficulty: ['easy', 'medium', 'hard'].includes(parsed.difficulty) ? parsed.difficulty : 'easy',
         soundEnabled: parsed.soundEnabled !== false,
       };
@@ -49,7 +30,6 @@ function loadSettings(): GameSettings {
   }
 
   return {
-    language: detectBrowserLanguage(),
     difficulty: 'easy',
     soundEnabled: true,
   };
@@ -73,10 +53,6 @@ export function GameSettingsProvider({ children }: { children: ReactNode }) {
     saveSettings(settings);
   }, [settings]);
 
-  const setLanguage = (language: Language) => {
-    setSettings(prev => ({ ...prev, language }));
-  };
-
   const setDifficulty = (difficulty: Difficulty) => {
     setSettings(prev => ({ ...prev, difficulty }));
   };
@@ -86,7 +62,7 @@ export function GameSettingsProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <GameSettingsContext.Provider value={{ settings, setLanguage, setDifficulty, setSoundEnabled }}>
+    <GameSettingsContext.Provider value={{ settings, setDifficulty, setSoundEnabled }}>
       {children}
     </GameSettingsContext.Provider>
   );

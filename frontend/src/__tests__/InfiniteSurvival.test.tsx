@@ -80,7 +80,7 @@ describe('InfiniteSurvival - Game Simulation', () => {
   });
 
   it('renders loading state then shows game UI', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     expect(screen.getByText('Loading game...')).toBeInTheDocument();
 
     await waitForGameReady();
@@ -92,7 +92,7 @@ describe('InfiniteSurvival - Game Simulation', () => {
   });
 
   it('shows streak and level in header', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     expect(screen.getByText(/Streak 0/)).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe('InfiniteSurvival - Game Simulation', () => {
   });
 
   it('solving a word increases survival streak', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     await spellWord('cat');
@@ -111,7 +111,7 @@ describe('InfiniteSurvival - Game Simulation', () => {
   });
 
   it('wrong answer skips to next word instead of ending game', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     // Spell wrong: "tac" ≠ "cat"
@@ -129,7 +129,7 @@ describe('InfiniteSurvival - Game Simulation', () => {
   });
 
   it('can solve word after a wrong answer', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     // Wrong answer first
@@ -150,7 +150,7 @@ describe('InfiniteSurvival - Game Simulation', () => {
   });
 
   it('wrong answer resets combo to 0', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     // Solve one correctly
@@ -170,7 +170,7 @@ describe('InfiniteSurvival - Game Simulation', () => {
   });
 
   it('backspace removes the last selected letter', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     await clickLetter('c');
@@ -195,7 +195,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('clicking an already-selected tile does nothing', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     await clickLetter('t');
@@ -215,7 +215,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('keyboard: pressing already-used letter key is a no-op', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     await clickLetter('t');
@@ -228,7 +228,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('keyboard: non-letter keys are ignored', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     await userEvent.keyboard('123!@#');
@@ -240,7 +240,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('keyboard Backspace removes last letter', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     await userEvent.keyboard('c');
@@ -264,7 +264,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('clear button resets all selected tiles', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     await clickLetter('c');
@@ -279,7 +279,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('backspace and clear are disabled with no letters selected', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     expect(screen.getByText(/Backspace/)).toBeDisabled();
@@ -287,7 +287,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('skip button shows cooldown after skipping', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     const skipBtn = screen.getByText('Skip (-10s)');
@@ -302,7 +302,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('wrong guess skips to next word and tiles reset', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     await spellWord('tac');
@@ -319,7 +319,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('multiple wrong guesses followed by correct solve', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     // Two wrong guesses
@@ -347,7 +347,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('shows streak and level info during gameplay', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     expect(screen.getByText(/Streak 0/)).toBeInTheDocument();
@@ -355,7 +355,7 @@ describe('InfiniteSurvival - Edge Cases', () => {
   });
 
   it('solving increases streak counter', async () => {
-    render(<InfiniteSurvival language="en" difficulty="easy" />);
+    render(<InfiniteSurvival difficulty="easy" />);
     await waitForGameReady();
 
     await spellWord('cat');

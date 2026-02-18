@@ -9,11 +9,10 @@ import { AdUnit } from './AdUnit';
 
 interface TimedModeProps {
   duration: TimedDuration;
-  language: string;
   difficulty: string;
 }
 
-export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
+export function TimedMode({ duration, difficulty }: TimedModeProps) {
   const { user } = useAuth();
 
   const {
@@ -35,7 +34,7 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
     wordStats,
     skippedWords,
     skipCooldownRemaining,
-  } = useTimedMode({ duration, language, difficulty });
+  } = useTimedMode({ duration, difficulty });
 
   const { playCorrect, playIncorrect, playSkip, playGameOver } = useSound();
   const [submitting, setSubmitting] = React.useState(false);
@@ -252,7 +251,7 @@ export function TimedMode({ duration, language, difficulty }: TimedModeProps) {
 
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
-        <AdUnit slot="GAME_RESULT" className="ad-h" />
+        <AdUnit placement="result" format="horizontal" className="ad-h" />
 
         <div className="actions">
           <button onClick={resetGame} className="btn-primary">

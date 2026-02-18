@@ -81,7 +81,7 @@ describe('TimedMode - Game Simulation', () => {
   });
 
   it('renders loading state then shows letter tiles', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     expect(screen.getByText('Loading game...')).toBeInTheDocument();
 
     await waitForGameReady();
@@ -96,7 +96,7 @@ describe('TimedMode - Game Simulation', () => {
   });
 
   it('clicking a letter adds it to the guess row', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     await clickLetter('c');
@@ -106,7 +106,7 @@ describe('TimedMode - Game Simulation', () => {
   });
 
   it('solving a word correctly increases the word count', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     expect(screen.getByText('Words: 0')).toBeInTheDocument();
@@ -119,7 +119,7 @@ describe('TimedMode - Game Simulation', () => {
   });
 
   it('solving multiple words increases combo and count', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     await spellWord('cat');
@@ -133,7 +133,7 @@ describe('TimedMode - Game Simulation', () => {
   });
 
   it('incorrect guess resets input and breaks combo', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     // Solve one correctly first
@@ -150,7 +150,7 @@ describe('TimedMode - Game Simulation', () => {
   });
 
   it('backspace removes the last selected letter', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     await clickLetter('c');
@@ -176,7 +176,7 @@ describe('TimedMode - Edge Cases', () => {
   });
 
   it('clicking an already-selected tile does nothing', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     await clickLetter('t');
@@ -197,7 +197,7 @@ describe('TimedMode - Edge Cases', () => {
   });
 
   it('keyboard: pressing already-used letter key is a no-op', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     // Use the 't' tile
@@ -213,7 +213,7 @@ describe('TimedMode - Edge Cases', () => {
   });
 
   it('keyboard: non-letter keys are ignored', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     await userEvent.keyboard('123!@#');
@@ -225,7 +225,7 @@ describe('TimedMode - Edge Cases', () => {
   });
 
   it('keyboard Backspace removes last letter', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     await userEvent.keyboard('c');
@@ -245,7 +245,7 @@ describe('TimedMode - Edge Cases', () => {
   });
 
   it('clear button resets all selected tiles', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     await clickLetter('c');
@@ -260,7 +260,7 @@ describe('TimedMode - Edge Cases', () => {
   });
 
   it('backspace and clear are disabled with no letters selected', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     expect(screen.getByText(/Backspace/)).toBeDisabled();
@@ -268,7 +268,7 @@ describe('TimedMode - Edge Cases', () => {
   });
 
   it('skip button shows cooldown after skipping', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     const skipBtn = screen.getByText('Skip (-5s)');
@@ -283,7 +283,7 @@ describe('TimedMode - Edge Cases', () => {
   });
 
   it('wrong guess does not advance word index but resets input', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     expect(screen.getByText('Words: 0')).toBeInTheDocument();
@@ -303,7 +303,7 @@ describe('TimedMode - Edge Cases', () => {
   });
 
   it('multiple wrong guesses followed by correct solve', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     // Two wrong guesses
@@ -331,7 +331,7 @@ describe('TimedMode - Edge Cases', () => {
   });
 
   it('shows word count and combo in game header', async () => {
-    render(<TimedMode duration={TimedDuration.THIRTY} language="en" difficulty="easy" />);
+    render(<TimedMode duration={TimedDuration.THIRTY} difficulty="easy" />);
     await waitForGameReady();
 
     expect(screen.getByText('Words: 0')).toBeInTheDocument();
