@@ -369,15 +369,16 @@ describe('Authentication Flow', () => {
     cy.setupMocks();
   });
 
-  it('shows auth modal when trying to start game without login', () => {
+  it('can start game without login', () => {
     cy.visit('/');
     cy.get('.btn-start').click();
-    cy.get('.modal-overlay').should('be.visible');
+    cy.url().should('include', '/play');
+    cy.get('.game-container').should('be.visible');
   });
 
-  it('can register a new user', () => {
+  it('can register via sign in icon', () => {
     cy.visit('/');
-    cy.get('.btn-start').click();
+    cy.get('.nav-icon[title="Sign In"]').click();
     cy.contains('Create an account').click();
     cy.get('input[placeholder*="nickname"]').type('NewPlayer');
     cy.contains('button', 'Register').click();

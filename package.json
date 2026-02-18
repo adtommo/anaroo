@@ -44,5 +44,8 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.57.1"
+  },
+  "dependencies": {
+    "listr2": "^10.1.0"
   }
 }

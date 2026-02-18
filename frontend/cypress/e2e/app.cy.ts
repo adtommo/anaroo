@@ -77,11 +77,7 @@ describe('Mode Selection', () => {
 
   it('hides difficulty for daily mode', () => {
     cy.get('.game-card').eq(0).click();
-    cy.get('.settings-label').contains('difficulty').should('not.exist');
-  });
-
-  it('shows language selector', () => {
-    cy.get('.settings-label').contains('language').should('be.visible');
+    cy.get('.settings-label').should('not.exist');
   });
 });
 
@@ -97,9 +93,9 @@ describe('Auth Modal', () => {
     cy.get('input#nickname').should('be.visible');
   });
 
-  it('opens auth modal when starting game without auth', () => {
+  it('starts game without auth and navigates to play', () => {
     cy.get('.btn-start').click();
-    cy.get('.modal-overlay').should('be.visible');
+    cy.url().should('include', '/play');
   });
 
   it('closes modal when clicking overlay', () => {

@@ -24,7 +24,7 @@ const mockToken = 'mock-jwt-token-12345';
 const mockDailyChallenge = {
   _id: 'daily-1',
   date: new Date().toISOString().split('T')[0],
-  word: 'testing',
+  letterCount: 7,
   scrambled: 'gtinets',
   seed: `daily-${new Date().toISOString().split('T')[0]}`,
   createdAt: new Date().toISOString(),
@@ -88,6 +88,32 @@ Cypress.Commands.add('setupMocks', () => {
   cy.intercept('GET', '/api/daily', { statusCode: 200, body: mockDailyChallenge });
   cy.intercept('GET', '/api/daily/status', { statusCode: 200, body: { completed: false } });
   cy.intercept('GET', '/api/daily/history*', { statusCode: 200, body: [] });
+
+  // Daily guess validation (server-side answer check)
+  cy.intercept('POST', '/api/daily/guess', (req) => {
+    const correct = req.body.guess?.toLowerCase() === 'testing';
+    req.reply({
+      statusCode: 200,
+      body: correct ? { correct: true, word: 'testing' } : { correct: false },
+    });
+  });
+
+  // Daily reveal (server-side hint)
+  cy.intercept('POST', '/api/daily/reveal', (req) => {
+    const revealedPositions: number[] = req.body.revealedPositions || [];
+    const word = 'testing';
+    // Find first unrevealed position
+    let position = -1;
+    let letter = '';
+    for (let i = 0; i < word.length; i++) {
+      if (!revealedPositions.includes(i)) {
+        position = i;
+        letter = word[i];
+        break;
+      }
+    }
+    req.reply({ statusCode: 200, body: { position, letter } });
+  });
 
   // Word pick - static response avoids StrictMode double-mount counter drift
   cy.intercept('GET', '/api/word/pick*', { statusCode: 200, body: mockWordPick });
@@ -186,6 +212,14 @@ Cypress.Commands.add('setupMocks', () => {
       },
       dailyStreak: 5,
       gamesPlayed: 150,
+      recentRuns: [],
+      rankings: {
+        daily: { rank: 3, totalPlayers: 100 },
+        timed30: { rank: 5, totalPlayers: 80 },
+        timed60: { rank: 2, totalPlayers: 90 },
+        timed120: { rank: 4, totalPlayers: 50 },
+        survival: { rank: 6, totalPlayers: 70 },
+      },
     },
   });
 
