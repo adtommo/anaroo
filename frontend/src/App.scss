@@ -836,13 +836,13 @@ button {
 }
 
 .letter-tile {
-  width: 36px;
-  height: 44px;
+  width: 44px;
+  height: 48px;
   border-radius: var(--radius-md);
   border: 2px solid transparent;
   background: var(--bg-secondary);
   font-family: var(--font-mono);
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-color);
   cursor: pointer;
@@ -876,9 +876,9 @@ button {
   }
 
   @media (min-width: 480px) {
-    width: 44px;
-    height: 52px;
-    font-size: 1.2rem;
+    width: 48px;
+    height: 54px;
+    font-size: 1.25rem;
   }
 
   @media (min-width: 768px) {
