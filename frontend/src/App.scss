@@ -836,13 +836,13 @@ button {
 }
 
 .letter-tile {
-  width: 44px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: var(--radius-md);
   border: 2px solid transparent;
   background: var(--bg-secondary);
   font-family: var(--font-mono);
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--text-color);
   cursor: pointer;
@@ -876,21 +876,21 @@ button {
   }
 
   @media (min-width: 480px) {
-    width: 48px;
-    height: 54px;
-    font-size: 1.25rem;
+    width: 58px;
+    height: 58px;
+    font-size: 1.6rem;
   }
 
   @media (min-width: 768px) {
-    width: 52px;
-    height: 60px;
-    font-size: 1.4rem;
+    width: 62px;
+    height: 62px;
+    font-size: 1.8rem;
   }
 
   @media (min-width: 1024px) {
-    width: 56px;
-    height: 64px;
-    font-size: 1.5rem;
+    width: 62px;
+    height: 62px;
+    font-size: 1.8rem;
   }
 }
 
