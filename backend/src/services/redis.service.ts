@@ -5,14 +5,12 @@ class RedisService {
   private client: RedisClientType | null = null;
   private isConnected = false;
 
-  async connect(host: string = 'localhost', port: number = 6379): Promise<void> {
+  async connect(hostOrUrl: string = 'localhost', port: number = 6379): Promise<void> {
     try {
-      this.client = createClient({
-        socket: {
-          host,
-          port,
-        },
-      });
+      const isUrl = hostOrUrl.startsWith('redis://') || hostOrUrl.startsWith('rediss://');
+      this.client = createClient(
+        isUrl ? { url: hostOrUrl } : { socket: { host: hostOrUrl, port } },
+      );
 
       this.client.on('error', (err) => console.error('Redis Client Error', err));
       this.client.on('connect', () => console.log('Redis connected'));

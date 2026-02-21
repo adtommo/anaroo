@@ -73,9 +73,14 @@ async function startServer() {
     }
 
     // Connect to Redis
-    const redisHost = process.env.REDIS_HOST || 'localhost';
-    const redisPort = parseInt(process.env.REDIS_PORT || '6379');
-    await redisService.connect(redisHost, redisPort);
+    const redisUrl = process.env.REDIS_URL;
+    if (redisUrl) {
+      await redisService.connect(redisUrl);
+    } else {
+      const redisHost = process.env.REDIS_HOST || 'localhost';
+      const redisPort = parseInt(process.env.REDIS_PORT || '6379');
+      await redisService.connect(redisHost, redisPort);
+    }
 
     // Start server
     app.listen(PORT, () => {
