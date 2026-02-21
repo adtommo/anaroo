@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.9...anaroo-v0.2.0) (2026-02-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* first v1 release
+
+### Features
+
+* first v1 release ([61cee6e](https://github.com/adtommo/anaroo/commit/61cee6ee5c01ea648a1f700038ff751c42bb253a))
+* first v1 release ([e015417](https://github.com/adtommo/anaroo/commit/e015417f9d3f09f563e96005060c6f8775000da0))
+
 ## [0.1.9](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.8...anaroo-v0.1.9) (2026-02-18)
 
 
