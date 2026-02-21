@@ -73,6 +73,9 @@ export function TimedMode({ duration, difficulty }: TimedModeProps) {
   const submitScore = async () => {
     if (!user || !gameState || !gameState.startTime || !gameState.endTime) return;
 
+    const wordCount = gameState.solvedWords.length;
+    if (wordCount === 0) return;
+
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -85,7 +88,7 @@ export function TimedMode({ duration, difficulty }: TimedModeProps) {
         correctChars: gameState.correctChars,
         incorrectChars: gameState.incorrectChars,
         seed: gameState.seed,
-        wordCount: gameState.solvedWords.length,
+        wordCount,
         timedDuration: duration,
       });
 
