@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAds } from '../contexts/AdContext';
 import { ProfileAvatar } from './ProfileAvatar';
+import { supabase } from '../lib/supabase';
 
 interface ProfileProps {
   onBack: () => void;
@@ -25,7 +26,7 @@ const MODE_LABELS: Record<string, string> = {
 };
 
 export function Profile({ onBack, onLogout }: ProfileProps) {
-  const { updateUser, logout } = useAuth();
+  const { updateUser, logout, changePassword } = useAuth();
   const { theme, setTheme } = useTheme();
   const { adLevel, setAdLevel } = useAds();
   const [profile, setProfile] = useState<EnrichedUserProfile | null>(null);
@@ -41,9 +42,53 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
 
+  const [hasEmailIdentity, setHasEmailIdentity] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadProfile(); }, []);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        const hasEmail = user.app_metadata?.provider === 'email'
+          || user.identities?.some((id) => id.provider === 'email');
+        setHasEmailIdentity(!!hasEmail);
+      }
+    });
+  }, []);
+
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+    setPasswordSuccess(false);
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      await changePassword(newPassword);
+      setPasswordSuccess(true);
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Failed to update password');
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -170,7 +215,7 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
       <div className="profile-header-bar">
         <button onClick={onBack} className="btn-back">← Back</button>
         <h2>Profile</h2>
-        <div />
+        <button className="pf-header-logout" onClick={() => { logout(); onLogout(); }}>Log Out</button>
       </div>
 
       {/* ── Details Card ── */}
@@ -319,49 +364,150 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
         </div>
       </div>
 
-      {/* ── Ads ── */}
+      {/* ── Account Settings (collapsible) ── */}
       <div className="profile-section">
-        <h3>Ads</h3>
-        <p className="ad-section-desc">
-          Ads help keep Anaroo free. You can adjust the level or turn them off entirely.
-        </p>
-        <div className="ad-level-options">
-          {(['off', 'result', 'on', 'sellout'] as const).map((level) => (
-            <button
-              key={level}
-              className={`settings-button ${adLevel === level ? 'active' : ''}`}
-              onClick={() => setAdLevel(level)}
-            >
-              {level}
-            </button>
-          ))}
-        </div>
-        <p className="ad-level-desc">
-          {{ off: 'No ads. Thanks for playing!', result: 'One ad on the result screen.', on: 'Result + sidebar banners.', sellout: 'Maximum ads. Thanks for the support!' }[adLevel]}
-        </p>
-      </div>
+        <button
+          className="pf-account-toggle"
+          onClick={() => setShowAccountSettings(!showAccountSettings)}
+        >
+          <h3>Account Settings</h3>
+          <svg
+            className={`pf-chevron${showAccountSettings ? ' open' : ''}`}
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
 
-      {/* ── Account ── */}
-      <div className="profile-section">
-        <h3>Account</h3>
-        <button className="btn-logout" onClick={() => { logout(); onLogout(); }}>Log Out</button>
-      </div>
+        {showAccountSettings && (
+          <div className="pf-account-body">
+            {/* ── Ads ── */}
+            <div className="pf-account-section">
+              <h4>Ads</h4>
+              <p className="ad-section-desc">
+                Ads help keep Anaroo free. You can adjust the level or turn them off entirely.
+              </p>
+              <div className="ad-level-options">
+                {(['off', 'result', 'on', 'sellout'] as const).map((level) => (
+                  <button
+                    key={level}
+                    className={`settings-button ${adLevel === level ? 'active' : ''}`}
+                    onClick={() => setAdLevel(level)}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="ad-level-desc">
+                {{ off: 'No ads. Thanks for playing!', result: 'One ad on the result screen.', on: 'Result + sidebar banners.', sellout: 'Maximum ads. Thanks for the support!' }[adLevel]}
+              </p>
+            </div>
 
-      {/* ── Danger Zone ── */}
-      <div className="profile-section danger-zone">
-        <h3>Danger Zone</h3>
-        {!showDeleteConfirm ? (
-          <button className="btn-danger" onClick={() => setShowDeleteConfirm(true)}>Delete Account</button>
-        ) : (
-          <div className="delete-confirm">
-            <p>This will permanently delete your account and all data. This action cannot be undone.</p>
-            <p>Type <strong>DELETE</strong> to confirm:</p>
-            <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder="Type DELETE" className="delete-input" />
-            <div className="delete-actions">
-              <button className="btn-danger" onClick={handleDeleteAccount} disabled={deleteConfirmText !== 'DELETE' || deleting}>
-                {deleting ? 'Deleting...' : 'Confirm Delete'}
-              </button>
-              <button className="btn-secondary" onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}>Cancel</button>
+            {/* ── Change Password ── */}
+            {hasEmailIdentity && (
+              <div className="pf-account-section">
+                <h4>Change Password</h4>
+                <div className="change-password-fields">
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => { setNewPassword(e.target.value); setPasswordSuccess(false); }}
+                      placeholder="New password"
+                      minLength={6}
+                      disabled={passwordSaving}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                          <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmNewPassword}
+                      onChange={(e) => { setConfirmNewPassword(e.target.value); setPasswordSuccess(false); }}
+                      placeholder="Confirm new password"
+                      minLength={6}
+                      disabled={passwordSaving}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                          <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                  <button
+                    className="btn-small"
+                    onClick={handleChangePassword}
+                    disabled={passwordSaving || !newPassword || !confirmNewPassword}
+                  >
+                    {passwordSaving ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
+                {passwordError && <div className="save-error">{passwordError}</div>}
+                {passwordSuccess && <div className="save-success">Password updated successfully.</div>}
+              </div>
+            )}
+
+            {/* ── Delete Account ── */}
+            <div className="pf-account-section pf-account-danger">
+              <h4>Delete Account</h4>
+              {!showDeleteConfirm ? (
+                <button className="btn-danger" onClick={() => setShowDeleteConfirm(true)}>Delete Account</button>
+              ) : (
+                <div className="delete-confirm">
+                  <p>This will permanently delete your account and all data. This action cannot be undone.</p>
+                  <p>Type <strong>DELETE</strong> to confirm:</p>
+                  <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder="Type DELETE" className="delete-input" />
+                  <div className="delete-actions">
+                    <button className="btn-danger" onClick={handleDeleteAccount} disabled={deleteConfirmText !== 'DELETE' || deleting}>
+                      {deleting ? 'Deleting...' : 'Confirm Delete'}
+                    </button>
+                    <button className="btn-secondary" onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}>Cancel</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

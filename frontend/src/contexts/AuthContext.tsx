@@ -17,10 +17,14 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  passwordRecoveryPending: boolean;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, nickname?: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithGitHub: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  changePassword: (newPassword: string) => Promise<void>;
+  clearPasswordRecovery: () => void;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => void;
 }
@@ -30,6 +34,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [passwordRecoveryPending, setPasswordRecoveryPending] = useState(false);
 
   const syncUserProfile = useCallback(async (accessToken: string): Promise<void> => {
     apiService.setToken(accessToken);
@@ -57,6 +62,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth state changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === 'PASSWORD_RECOVERY') {
+        setPasswordRecoveryPending(true);
+      }
       if (session?.access_token) {
         syncUserProfile(session.access_token);
       } else {
@@ -97,6 +105,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+  };
+
+  const changePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  };
+
+  const clearPasswordRecovery = () => setPasswordRecoveryPending(false);
+
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -117,10 +137,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user,
       loading,
+      passwordRecoveryPending,
       signInWithEmail,
       signUpWithEmail,
       signInWithGoogle,
       signInWithGitHub,
+      resetPassword,
+      changePassword,
+      clearPasswordRecovery,
       logout,
       updateUser,
     }}>
