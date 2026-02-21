@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/adtommo/anaroo/compare/anaroo-v1.0.1...anaroo-v1.1.0) (2026-02-21)
+
+
+### Features
+
+* add password reset, improve profile page layout ([a884032](https://github.com/adtommo/anaroo/commit/a884032607de2df49aa05121ca56bb044c7f457e))
+
 ## [1.0.1](https://github.com/adtommo/anaroo/compare/anaroo-v1.0.0...anaroo-v1.0.1) (2026-02-21)
 
 
