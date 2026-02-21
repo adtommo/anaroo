@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.0](https://github.com/adtommo/anaroo/compare/anaroo-v0.2.0...anaroo-v1.0.0) (2026-02-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* first v1 release
+
+### Features
+
+* first v1 release ([de7c507](https://github.com/adtommo/anaroo/commit/de7c5074759764129794c2868a917da8e782380d))
+
+
+### Bug Fixes
+
+* add adsense env variable ([529e175](https://github.com/adtommo/anaroo/commit/529e17552bd3b53f35ac97bf3f0a02a579b275a6))
+
 ## [0.2.0](https://github.com/adtommo/anaroo/compare/anaroo-v0.1.9...anaroo-v0.2.0) (2026-02-21)
 
 
