@@ -21,6 +21,7 @@ RUN npm run build --workspace=shared
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_PUBLISHABLE_KEY
 ARG VITE_API_URL
+ARG VITE_ADSENSE_CLIENT
 RUN npm run build --workspace=frontend
 
 # Production stage with nginx
