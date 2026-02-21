@@ -13,7 +13,7 @@ import { AuthModal } from './components/AuthModal';
 import { Footer } from './components/Footer';
 import { About } from './components/About';
 import { TermsOfService, PrivacyPolicy, SecurityPolicy, Contact } from './components/LegalPages';
-import { CookieConsent } from './components/CookieConsent';
+
 import { AccessibilityStatement } from './components/AccessibilityStatement';
 import { NotFound } from './components/NotFound';
 import { PublicProfile } from './components/PublicProfile';
@@ -256,7 +256,7 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showCookieSettings, setShowCookieSettings] = useState(false);
+
 
   const isActive = (path: string) => location.pathname === path;
   const isPlaying = location.pathname === '/play';
@@ -347,13 +347,7 @@ function App() {
         </div>
       </div>
 
-      <Footer onOpenCookieSettings={() => setShowCookieSettings(true)} />
-
-      <CookieConsent
-        onOpenPrivacy={() => navigate('/privacy')}
-        forceOpen={showCookieSettings}
-        onClose={() => setShowCookieSettings(false)}
-      />
+      <Footer />
 
       {showAuthModal && (
         <AuthModal onClose={() => setShowAuthModal(false)} />

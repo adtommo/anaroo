@@ -1,10 +1,6 @@
 import { Link } from 'react-router-dom';
 
-interface FooterProps {
-  onOpenCookieSettings?: () => void;
-}
-
-export function Footer({ onOpenCookieSettings }: FooterProps) {
+export function Footer() {
   return (
     <footer className="footer">
       <div className="footer-links">
@@ -23,10 +19,6 @@ export function Footer({ onOpenCookieSettings }: FooterProps) {
         <Link to="/privacy">privacy</Link>
         <span className="footer-sep">|</span>
         <Link to="/accessibility">accessibility</Link>
-        <span className="footer-sep">|</span>
-        <button className="footer-link-button" onClick={onOpenCookieSettings}>
-          cookies
-        </button>
       </div>
     </footer>
   );
