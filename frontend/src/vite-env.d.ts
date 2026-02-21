@@ -4,7 +4,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
-  // Add more env variables as needed
+  readonly VITE_SUPABASE_URL: string;
+  readonly VITE_SUPABASE_PUBLISHABLE_KEY: string;
 }
 
 interface ImportMeta {

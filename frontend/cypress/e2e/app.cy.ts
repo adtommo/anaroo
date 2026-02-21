@@ -90,7 +90,8 @@ describe('Auth Modal', () => {
   it('opens auth modal when clicking sign in icon', () => {
     cy.get('.nav-icon[title="Sign In"]').click();
     cy.get('.modal-overlay').should('be.visible');
-    cy.get('input#nickname').should('be.visible');
+    cy.get('input#email').should('be.visible');
+    cy.get('input#password').should('be.visible');
   });
 
   it('starts game without auth and navigates to play', () => {
@@ -110,19 +111,30 @@ describe('Auth Modal', () => {
     cy.get('.modal-overlay').should('not.exist');
   });
 
-  it('switches between login and register forms', () => {
+  it('switches between sign in and create account forms', () => {
     cy.get('.nav-icon[title="Sign In"]').click();
     cy.contains('Create an account').click();
-    cy.get('h2').should('contain', 'Register');
+    cy.get('h2').should('contain', 'Create Account');
     cy.contains('Already have an account').click();
     cy.get('h2').should('contain', 'Sign In');
   });
 
-  it('requires nickname to be entered', () => {
+  it('shows OAuth buttons', () => {
     cy.get('.nav-icon[title="Sign In"]').click();
-    cy.get('input#nickname').should('be.visible');
-    // Nickname field should be required
-    cy.get('input#nickname').should('have.attr', 'required');
+    cy.contains('Continue with Google').should('be.visible');
+    cy.contains('Continue with GitHub').should('be.visible');
+  });
+
+  it('requires email and password to be entered', () => {
+    cy.get('.nav-icon[title="Sign In"]').click();
+    cy.get('input#email').should('be.visible').and('have.attr', 'required');
+    cy.get('input#password').should('be.visible').and('have.attr', 'required');
+  });
+
+  it('shows confirm password field in create account mode', () => {
+    cy.get('.nav-icon[title="Sign In"]').click();
+    cy.contains('Create an account').click();
+    cy.get('input#confirmPassword').should('be.visible');
   });
 });
 

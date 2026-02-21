@@ -2,7 +2,6 @@ import { http, HttpResponse, delay } from 'msw';
 import { GameMode } from '@anaroo/shared';
 import {
   mockUser,
-  mockToken,
   mockDailyChallenge,
   mockLeaderboardEntries,
   mockRuns,
@@ -23,24 +22,10 @@ export const handlers = [
     return HttpResponse.json({ status: 'ok' });
   }),
 
-  // Auth: Register
-  http.post(`${API_BASE}/auth/register`, async ({ request }) => {
+  // Auth: Get current user
+  http.get(`${API_BASE}/auth/me`, async () => {
     await delay(100);
-    const body = await request.json() as { nickname: string };
-    return HttpResponse.json({
-      user: { ...mockUser, nickname: body.nickname },
-      token: mockToken,
-    }, { status: 201 });
-  }),
-
-  // Auth: Login
-  http.post(`${API_BASE}/auth/login`, async ({ request }) => {
-    await delay(100);
-    const body = await request.json() as { nickname: string };
-    return HttpResponse.json({
-      user: { ...mockUser, nickname: body.nickname },
-      token: mockToken,
-    });
+    return HttpResponse.json(mockUser);
   }),
 
   // Daily challenge

@@ -15,7 +15,7 @@ import { dailyChallengeService } from '../services/daily.service';
 import { wordService } from '../services/word.service';
 import { profileService } from '../services/profile.service';
 import { UserModel } from '../models';
-import { AuthRequest, requireAuth, optionalAuth, generateToken } from '../middleware/auth';
+import { AuthRequest, requireAuth, optionalAuth } from '../middleware/auth';
 
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 const VALID_LANGS = ['en', 'es', 'fr', 'de'] as const;
@@ -23,89 +23,31 @@ const VALID_LANGS = ['en', 'es', 'fr', 'de'] as const;
 const router = Router();
 
 /**
- * POST /api/auth/register
- * Register a new user
+ * GET /api/auth/me
+ * Get the current authenticated user's profile
  */
-router.post('/auth/register', async (req: Request, res: Response): Promise<void> => {
+router.get('/auth/me', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { nickname } = req.body;
-
-    if (!nickname || typeof nickname !== 'string' || nickname.trim().length === 0) {
-      res.status(400).json({ error: 'Valid nickname required' });
-      return;
-    }
-
-    const trimmed = nickname.trim();
-    if (trimmed.length < 2 || trimmed.length > 20) {
-      res.status(400).json({ error: 'Nickname must be between 2 and 20 characters' });
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
-      res.status(400).json({ error: 'Nickname can only contain letters, numbers, underscores, and hyphens' });
-      return;
-    }
-
-    // Check if nickname already exists
-    const existing = await UserModel.findOne({ nickname: nickname.trim() });
-    if (existing) {
-      res.status(409).json({ error: 'Nickname already taken' });
-      return;
-    }
-
-    const user = await UserModel.create({
-      nickname: nickname.trim(),
-      createdAt: new Date(),
-    });
-
-    const token = generateToken(user._id.toString());
-
-    res.status(201).json({
-      user: {
-        _id: user._id.toString(),
-        nickname: user.nickname,
-        createdAt: user.createdAt,
-      },
-      token,
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Failed to register user' });
-  }
-});
-
-/**
- * POST /api/auth/login
- * Login with nickname (simplified auth)
- */
-router.post('/auth/login', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { nickname } = req.body;
-
-    if (!nickname || typeof nickname !== 'string') {
-      res.status(400).json({ error: 'Nickname required' });
-      return;
-    }
-
-    const user = await UserModel.findOne({ nickname: nickname.trim() });
+    const user = await UserModel.findById(req.userId).lean();
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
 
-    const token = generateToken(user._id.toString());
-
     res.json({
-      user: {
-        _id: user._id.toString(),
-        nickname: user.nickname,
-        createdAt: user.createdAt,
-      },
-      token,
+      _id: user._id.toString(),
+      nickname: user.nickname,
+      email: user.email,
+      createdAt: user.createdAt,
+      xp: user.xp,
+      level: user.level,
+      avatarId: user.avatarId,
+      theme: user.theme,
+      profileImage: user.profileImage,
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Failed to login' });
+    console.error('Get current user error:', error);
+    res.status(500).json({ error: 'Failed to fetch user' });
   }
 });
 

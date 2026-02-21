@@ -1619,7 +1619,60 @@ button {
   }
 }
 
-/* ─── Auth Form ─── */
+/* ─── OAuth & Auth Form ─── */
+.oauth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.btn-oauth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-md);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-color);
+  background: var(--bg-secondary);
+  border: 2px solid var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    border-color: var(--sub-color);
+    background: var(--bg-tertiary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+  color: var(--sub-color);
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--bg-tertiary);
+  }
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -1662,6 +1715,48 @@ button {
       opacity: 0.7;
     }
   }
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--sub-color);
+  opacity: 0.8;
+  font-family: var(--font-sans);
+}
+
+.password-input-wrapper {
+  position: relative;
+
+  input {
+    width: 100%;
+    padding-right: 44px;
+  }
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xs);
+  color: var(--sub-color);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+
+  &:hover {
+    color: var(--text-color);
+  }
+}
+
+.auth-form .btn-primary {
+  width: 100%;
+  font-family: var(--font-sans);
 }
 
 .error-message {

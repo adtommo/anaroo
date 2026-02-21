@@ -15,6 +15,7 @@ import { About } from './components/About';
 import { TermsOfService, PrivacyPolicy, SecurityPolicy, Contact } from './components/LegalPages';
 import { CookieConsent } from './components/CookieConsent';
 import { AccessibilityStatement } from './components/AccessibilityStatement';
+import { NotFound } from './components/NotFound';
 import { PublicProfile } from './components/PublicProfile';
 import { ProfileAvatar } from './components/ProfileAvatar';
 import { GameDemo } from './components/GameDemo';
@@ -337,6 +338,7 @@ function App() {
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/accessibility" element={<AccessibilityPage />} />
+            <Route path="*" element={<NotFound onBack={() => navigate(-1)} onHome={() => navigate('/')} />} />
           </Routes>
         </main>
 

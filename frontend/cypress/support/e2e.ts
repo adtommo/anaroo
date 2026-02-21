@@ -12,6 +12,7 @@ Cypress.on('uncaught:exception', (err) => {
 const mockUser = {
   _id: 'user-1',
   nickname: 'TestPlayer',
+  email: 'test@example.com',
   avatarId: 'default',
   theme: 'dark',
   xp: 1500,
@@ -19,7 +20,7 @@ const mockUser = {
   createdAt: new Date('2025-01-01').toISOString(),
 };
 
-const mockToken = 'mock-jwt-token-12345';
+const mockToken = 'mock-supabase-access-token';
 
 const mockDailyChallenge = {
   _id: 'daily-1',
@@ -63,24 +64,11 @@ Cypress.Commands.add('setupMocks', () => {
   // Health check
   cy.intercept('GET', '/api/health', { statusCode: 200, body: { status: 'ok' } });
 
-  // Auth
-  cy.intercept('POST', '/api/auth/register', (req) => {
-    req.reply({
-      statusCode: 201,
-      body: {
-        user: { ...mockUser, nickname: req.body.nickname },
-        token: mockToken,
-      },
-    });
-  });
-
-  cy.intercept('POST', '/api/auth/login', (req) => {
+  // Auth: Get current user
+  cy.intercept('GET', '/api/auth/me', (req) => {
     req.reply({
       statusCode: 200,
-      body: {
-        user: { ...mockUser, nickname: req.body.nickname },
-        token: mockToken,
-      },
+      body: { ...mockUser },
     });
   });
 
@@ -132,7 +120,7 @@ Cypress.Commands.add('setupMocks', () => {
         success: true,
         run: {
           _id: `run-${Date.now()}`,
-          odid: mockUser.odid,
+          userId: mockUser._id,
           mode: req.body.mode,
           score: req.body.score,
           accuracy: req.body.accuracy,
@@ -256,7 +244,7 @@ Cypress.Commands.add('solveWord', (word: string) => {
   }
 });
 
-// Mock login - sets up localStorage as if logged in
+// Mock login - sets up localStorage as if Supabase session is active and user is synced
 Cypress.Commands.add('mockLogin', (nickname = 'TestPlayer') => {
   const user = { ...mockUser, nickname };
   cy.window().then((win) => {

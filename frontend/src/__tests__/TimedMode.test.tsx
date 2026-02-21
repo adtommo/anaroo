@@ -48,9 +48,12 @@ vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { _id: 'user-1', nickname: 'TestPlayer', createdAt: new Date() },
     loading: false,
-    login: vi.fn(),
-    register: vi.fn(),
+    signInWithEmail: vi.fn(),
+    signUpWithEmail: vi.fn(),
+    signInWithGoogle: vi.fn(),
+    signInWithGitHub: vi.fn(),
     logout: vi.fn(),
+    updateUser: vi.fn(),
   }),
 }));
 

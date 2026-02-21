@@ -376,13 +376,13 @@ describe('Authentication Flow', () => {
     cy.get('.game-container').should('be.visible');
   });
 
-  it('can register via sign in icon', () => {
+  it('opens create account form via sign in icon', () => {
     cy.visit('/');
     cy.get('.nav-icon[title="Sign In"]').click();
     cy.contains('Create an account').click();
-    cy.get('input[placeholder*="nickname"]').type('NewPlayer');
-    cy.contains('button', 'Register').click();
-    cy.get('.modal-overlay').should('not.exist');
+    cy.get('input#email').should('be.visible');
+    cy.get('input#password').should('be.visible');
+    cy.get('input#confirmPassword').should('be.visible');
   });
 
   it('after login, play button navigates to game', () => {

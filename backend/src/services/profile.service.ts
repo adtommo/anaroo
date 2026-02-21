@@ -14,6 +14,7 @@ import {
 } from '@anaroo/shared';
 import { UserModel, PersonalStatsModel, RunModel, BestScoreModel } from '../models';
 import { redisService } from './redis.service';
+import { supabaseAdmin } from '../lib/supabase';
 
 class ProfileService {
   /**
@@ -225,16 +226,25 @@ class ProfileService {
   }
 
   /**
-   * Delete user account and all associated data
+   * Delete user account and all associated data (MongoDB + Supabase)
    */
   async deleteAccount(userId: string): Promise<void> {
-    // Delete all user data in parallel
+    // Look up the Supabase ID before deleting MongoDB records
+    const user = await UserModel.findById(userId).lean();
+    const supabaseId = user?.supabaseId;
+
+    // Delete all MongoDB data in parallel
     await Promise.all([
       UserModel.findByIdAndDelete(userId),
       PersonalStatsModel.deleteMany({ userId }),
       RunModel.deleteMany({ userId }),
       BestScoreModel.deleteMany({ userId }),
     ]);
+
+    // Delete from Supabase Auth
+    if (supabaseId) {
+      await supabaseAdmin.auth.admin.deleteUser(supabaseId);
+    }
   }
 }
 

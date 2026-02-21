@@ -25,7 +25,7 @@ const MODE_LABELS: Record<string, string> = {
 };
 
 export function Profile({ onBack, onLogout }: ProfileProps) {
-  const { updateUser } = useAuth();
+  const { updateUser, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const { adLevel, setAdLevel } = useAds();
   const [profile, setProfile] = useState<EnrichedUserProfile | null>(null);
@@ -85,7 +85,7 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
     setDeleting(true);
     try {
       await apiService.deleteAccount();
-      apiService.clearToken();
+      await logout();
       onLogout();
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to delete account');
@@ -344,7 +344,7 @@ export function Profile({ onBack, onLogout }: ProfileProps) {
       {/* ── Account ── */}
       <div className="profile-section">
         <h3>Account</h3>
-        <button className="btn-logout" onClick={() => { apiService.clearToken(); onLogout(); }}>Log Out</button>
+        <button className="btn-logout" onClick={() => { logout(); onLogout(); }}>Log Out</button>
       </div>
 
       {/* ── Danger Zone ── */}

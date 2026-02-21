@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
 import { apiService } from '../services/api';
 
 interface User {
   _id?: string;
+  email?: string;
   nickname: string;
   createdAt: Date;
   xp?: number;
@@ -15,9 +17,11 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (nickname: string) => Promise<void>;
-  register: (nickname: string) => Promise<void>;
-  logout: () => void;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, nickname?: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithGitHub: () => Promise<void>;
+  logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => void;
 }
 
@@ -27,32 +31,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for stored user data
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse stored user:', error);
-      }
+  const syncUserProfile = useCallback(async (accessToken: string): Promise<void> => {
+    apiService.setToken(accessToken);
+    try {
+      const profile = await apiService.getMe();
+      setUser(profile);
+      localStorage.setItem('user', JSON.stringify(profile));
+    } catch (error) {
+      console.error('Failed to sync user profile:', error);
+      setUser(null);
+      localStorage.removeItem('user');
+      apiService.clearToken();
     }
-    setLoading(false);
   }, []);
 
-  const login = async (nickname: string) => {
-    const result = await apiService.login(nickname);
-    setUser(result.user);
-    localStorage.setItem('user', JSON.stringify(result.user));
+  useEffect(() => {
+    // Get the initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) {
+        syncUserProfile(session.access_token).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for auth state changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.access_token) {
+        syncUserProfile(session.access_token);
+      } else {
+        setUser(null);
+        localStorage.removeItem('user');
+        apiService.clearToken();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [syncUserProfile]);
+
+  const signInWithEmail = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
   };
 
-  const register = async (nickname: string) => {
-    const result = await apiService.register(nickname);
-    setUser(result.user);
-    localStorage.setItem('user', JSON.stringify(result.user));
+  const signUpWithEmail = async (email: string, password: string, nickname?: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { nickname: nickname || email.split('@')[0] },
+      },
+    });
+    if (error) throw error;
   };
 
-  const logout = () => {
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    if (error) throw error;
+  };
+
+  const signInWithGitHub = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'github' });
+    if (error) throw error;
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     localStorage.removeItem('user');
     apiService.clearToken();
@@ -68,7 +114,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      signInWithEmail,
+      signUpWithEmail,
+      signInWithGoogle,
+      signInWithGitHub,
+      logout,
+      updateUser,
+    }}>
       {children}
     </AuthContext.Provider>
   );

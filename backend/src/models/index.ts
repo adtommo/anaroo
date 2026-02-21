@@ -9,7 +9,9 @@ export interface DailyChallengeDocument extends Omit<DailyChallenge, '_id'>, Doc
 export interface AnagramGroupDocument extends Omit<AnagramGroup, '_id'>, Document {}
 
 const UserSchema = new Schema<UserDocument>({
-  nickname: { type: String, required: true, unique: true, trim: true },
+  supabaseId: { type: String, required: true, unique: true },
+  email: { type: String, default: '' },
+  nickname: { type: String, required: true, trim: true },
   createdAt: { type: Date, default: Date.now },
   // Profile enhancements
   xp: { type: Number, default: 0 },

@@ -65,22 +65,8 @@ class ApiService {
   }
 
   // Auth endpoints
-  async register(nickname: string): Promise<{ user: User; token: string }> {
-    const result = await this.request<{ user: User; token: string }>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ nickname }),
-    });
-    this.setToken(result.token);
-    return result;
-  }
-
-  async login(nickname: string): Promise<{ user: User; token: string }> {
-    const result = await this.request<{ user: User; token: string }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ nickname }),
-    });
-    this.setToken(result.token);
-    return result;
+  async getMe(): Promise<User> {
+    return this.request<User>('/auth/me');
   }
 
   // Score endpoints
