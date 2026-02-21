@@ -59,6 +59,7 @@ services:
         - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
         - VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
         - VITE_API_URL=${VITE_API_URL:-}
+        - VITE_ADSENSE_CLIENT=${VITE_ADSENSE_CLIENT:-}
     container_name: anaroo-frontend
     restart: unless-stopped
     ports:
